@@ -6,7 +6,9 @@
 
 ![桌面预览](docs/desktop-preview.png)
 
-> 图为桌面布局预览，日期、时间、天气为示例数据。
+> 左：主页（表盘 + 四个功能入口）　右：倒计时。两屏均由 v1.0 固件的绘制代码逐像素重放生成——字体、图标、坐标与实际屏幕一致；日期、时间、天气、农历为示例数据。
+>
+> 收音机与小智页由 LVGL 组件渲染，未在此图中，实机效果见各页说明。
 
 ---
 
@@ -347,7 +349,9 @@ AlphaPi-OneS-4in1/
 ├── LICENSE                    # MIT（继承上游）
 ├── THIRD_PARTY_NOTICES.md     # 第三方组件声明
 ├── docs/
-│   ├── desktop-preview.png    # 桌面预览图
+│   ├── desktop-preview.png    # 预览图（主页 + 倒计时，逐像素重放）
+│   ├── screen-home.png        # 主页单屏
+│   ├── screen-timer.png       # 倒计时单屏
 │   └── game-preview.html      # 游戏页交互预览（浏览器打开）
 ├── firmware/v1.0/
 │   ├── AlphaPi-OneS-Desktop-Dark.bin      # 应用固件（写 0x20000）
