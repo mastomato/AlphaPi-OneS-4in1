@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlphaPi OneS · 游戏页 1:1 预览</title>
+<style>
+  :root { --bd:#0e1420; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #0a0e16; color: #93aac6;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 18px 12px 32px;
+  }
+  h1 { font-size: 18px; color: #ffd27a; margin: 0 0 4px; font-weight: 600; }
+  .sub { font-size: 12px; color: #6b7e98; margin: 0 0 14px; }
+  .stage {
+    position: relative; width: 480px; height: 384px;
+    background: #0e1420; border: 2px solid #24314a; border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.5); overflow: hidden;
+  }
+  canvas#screen {
+    position: absolute; left: 0; top: 0; width: 480px; height: 384px;
+    image-rendering: pixelated; image-rendering: crisp-edges;
+  }
+  #ovl { position: absolute; left: 0; top: 0; width: 160px; height: 128px; transform: scale(3); transform-origin: 0 0; pointer-events: none; }
+  .ovl { position: absolute; white-space: nowrap; }
+  #title  { left: 65px;  top: 3px;   font-size: 15px; color: #ffd27a; font-weight: 700; }
+  /* 得分改为画布内像素 HUD，不再用浮层文字 */
+  #msg    { left: 20px;  top: 54px;  font-size: 13px; color: #ffd27a; font-weight: 700; }
+  #hint   { left: 8px;   top: 114px; font-size: 8px;  color: #8fa3bd; }
+  .gname  { font-size: 11px; font-weight: 700; }
+  .legend {
+    margin-top: 16px; width: 480px; background: #111a28; border: 1px solid #24314a;
+    border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.7;
+  }
+  .legend b { color: #ffd27a; }
+  .legend .k {
+    display: inline-block; min-width: 22px; text-align: center; padding: 1px 6px;
+    margin: 0 2px; background: #1c2740; border: 1px solid #34466a; border-radius: 4px;
+    color: #cfe0f5; font-weight: 600;
+  }
+  .row { margin: 2px 0; }
+  .tag { color: #8fe3f0; }
+</style>
+</head>
+<body>
+  <h1>AlphaPi OneS · 游戏页 1:1 预览</h1>
+  <p class="sub">160×128 逻辑像素 · 与设备固件同网格/同速度/同键位 · 可键盘试玩</p>
+
+  <div class="stage" id="stage">
+    <canvas id="screen" width="160" height="128"></canvas>
+    <div id="ovl">
+      <div class="ovl" id="title">游戏</div>
+      <div class="ovl" id="msg"></div>
+      <div class="ovl" id="hint"></div>
+      <div class="ovl gname" id="g0"></div>
+      <div class="ovl gname" id="g1"></div>
+      <div class="ovl gname" id="g2"></div>
+      <div class="ovl gname" id="g3"></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="row"><b>键位（4 键）</b> · <span class="tag">A</span>=Space / <span class="tag">B</span>=← / <span class="tag">C</span>=→ / <span class="tag">D</span>=↓ / 按住 0.9 秒 = 长按 / <span class="tag">Esc</span>=回列表</div>
+    <div class="row"><b>长按统一：</b><span class="k">A</span>开始/重开 · <span class="k">B</span>退回游戏列表 · <span class="k">C</span>暂停/继续 · <span class="k">D</span>结束并回主页</div>
+    <div class="row"><b>启动器：</b><span class="k">A</span>进入 · <span class="k">B</span>/<span class="k">C</span>左右选择 · <span class="k">D</span>回主页</div>
+    <div class="row"><b>贪吃蛇：</b>单击 <span class="k">A</span>上 · <span class="k">B</span>下 · <span class="k">C</span>左 · <span class="k">D</span>右</div>
+    <div class="row"><b>打砖块：</b>单击 <span class="k">A</span>发球 · <span class="k">B</span>暂停 · <span class="k">C</span>左移 · <span class="k">D</span>右移（球速 60px/s，挡板 20px/次）</div>
+    <div class="row"><b>像素鸟：</b>四键分档拍翅 · <span class="k">A</span>大跳(8) · <span class="k">B</span>中跳(6) · <span class="k">C</span>小跳(5) · <span class="k">D</span>轻点(4)</div>
+    <div class="row"><b>俄罗斯方块：</b>单击 <span class="k">A</span>旋转 · <span class="k">B</span>硬降 · <span class="k">C</span>左移 · <span class="k">D</span>右移</div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  const W=160, H=128, S=3;
+  const cv = document.getElementById('screen');
+  const ctx = cv.getContext('2d');
+  const img = ctx.createImageData(W,H);
+  function pal(r,g,b){ return [r,g,b,255]; }
+  function clamp(v){ return v<0?0:v>255?255:v; }
+  function mix(c,f){ return [clamp((c[0]*f)|0),clamp((c[1]*f)|0),clamp((c[2]*f)|0),255]; }
+  const P = {
+    BG:pal(9,14,24), PANEL:pal(17,26,42), PANEL2:pal(26,39,62), EDGE:pal(44,62,94),
+    INK:pal(150,176,208), WARM:pal(255,196,92), CYAN:pal(96,214,236), WHITE:pal(240,246,255),
+    RED:pal(240,90,96), GREEN:pal(78,201,120), BLUE:pal(96,148,255),
+    YELLOW:pal(255,214,102), PURPLE:pal(186,140,246), ORANGE:pal(255,150,64),
+    SKY:pal(24,38,64), GRASS:pal(74,150,86), DIRT:pal(56,44,38), PIPE:pal(70,190,110)
+  };
+  function setPx(x,y,c){ const i=(y*W+x)*4; img.data[i]=c[0]; img.data[i+1]=c[1]; img.data[i+2]=c[2]; img.data[i+3]=255; }
+  function px(x,y,c){ if(x<0||x>=W||y<0||y>=H) return; setPx(x,y,c); }
+  function rect(x,y,w,h,c){ for(let j=0;j<h;j++) for(let i=0;i<w;i++) px(x+i,y+j,c); }
+  function clear(c){ for(let i=0;i<W*H;i++){ img.data[i*4]=c[0]; img.data[i*4+1]=c[1]; img.data[i*4+2]=c[2]; img.data[i*4+3]=255; } }
+  function circle(cx,cy,r,c){ for(let y=-r;y<=r;y++) for(let x=-r;x<=r;x++) if(x*x+y*y<=r*r+r*0.7) px(cx+x,cy+y,c); }
+  // 圆角实心矩形
+  function rrect(x,y,w,h,r,c){
+    for(let j=0;j<h;j++) for(let i=0;i<w;i++){
+      let ok=true;
+      if(i<r && j<r) ok=((r-1-i)*(r-1-i)+(r-1-j)*(r-1-j) <= r*r);
+      else if(i>=w-r && j<r) ok=((i-(w-r))*(i-(w-r))+(r-1-j)*(r-1-j) <= r*r);
+      else if(i<r && j>=h-r) ok=((r-1-i)*(r-1-i)+(j-(h-r))*(j-(h-r)) <= r*r);
+      else if(i>=w-r && j>=h-r) ok=((i-(w-r))*(i-(w-r))+(j-(h-r))*(j-(h-r)) <= r*r);
+      if(ok) px(x+i,y+j,c);
+    }
+  }
+  // 立体圆角块：圆角 + 顶/左高光 + 底/右暗边
+  function block3d(x,y,w,h,r,c){
+    rrect(x,y,w,h,r,c);
+    const hi=mix(c,1.5), mid=mix(c,1.2), lo=mix(c,0.55);
+    for(let i=r;i<w-r;i++){ px(x+i,y,hi); px(x+i,y+1,mid); }
+    for(let j=r;j<h-r;j++){ px(x,y+j,hi); px(x+1,y+j,mid); }
+    for(let i=r;i<w-r;i++) px(x+i,y+h-1,lo);
+    for(let j=r;j<h-r;j++) px(x+w-1,y+j,lo);
+  }
+
+  // ---- 像素 HUD：3×5 点阵数字 + 微型图标 ----
+  // 画面本身是像素风，得分若用浏览器平滑字体压在上面会非常突兀，
+  // 故改用与游戏同像素密度的点阵数字，画在棋盘上方的空带里（y≈2..7）。
+  const DIG=[
+    7,5,5,5,7,  // 0
+    2,6,2,2,7,  // 1
+    7,1,7,4,7,  // 2
+    7,1,7,1,7,  // 3
+    5,5,7,1,1,  // 4
+    7,4,7,1,7,  // 5
+    7,4,7,5,7,  // 6
+    7,1,1,1,1,  // 7
+    7,5,7,5,7,  // 8
+    7,5,7,1,7   // 9
+  ];
+  function pad2(v){ return (v < 10 ? '0' : '') + v; }
+  function drawNum(x, y, s, c){
+    s = String(s);
+    for(let k=0;k<s.length;k++){
+      const d = s.charCodeAt(k) - 48;
+      if(d < 0 || d > 9) continue;
+      for(let r=0;r<5;r++){
+        const row = DIG[d*5+r];
+        for(let b=0;b<3;b++) if(row & (4>>b)) px(x + k*4 + b, y + r, c);
+      }
+    }
+  }
+  function icoApple(x,y){ circle(x,y+1,2,P.RED); px(x,y-1,mix(P.GREEN,1.2)); px(x+1,y-1,P.GREEN); }
+  function icoBrick(x,y){ rect(x-3,y-1,3,3,mix(P.ORANGE,1.15)); rect(x+1,y-1,3,3,P.ORANGE); }
+  function icoBird(x,y){ circle(x,y,2,P.WARM); px(x+2,y,P.ORANGE); px(x+1,y-1,P.WHITE); }
+  function icoBlock(x,y){ rrect(x-2,y-2,5,5,1,P.CYAN); px(x-1,y-1,P.WHITE); }
+  function icoPaddle(x,y,c){ rect(x,y,5,2,c); px(x+1,y,mix(c,1.5)); }
+  function icoBars(x,y){ rect(x,y,5,1,mix(P.YELLOW,0.7)); rect(x,y+2,5,1,P.YELLOW); rect(x,y+4,5,1,mix(P.YELLOW,0.5)); }
+  // HUD 徽章底：圆角深底 + 1px 细边（贴在棋盘上沿，形成结构感）
+  function chipBg(x,y,w,h){
+    rrect(x,y,w,h,3,P.EDGE);
+    rrect(x+1,y+1,w-2,h-2,2,mix(P.PANEL,1.08));
+  }
+  // 左侧计分徽章：图标 + 数字
+  function hudLeft(icoFn, val){
+    const s = pad2(val), w = 12 + s.length*4;
+    chipBg(6,0,w,9);
+    icoFn(11,4); drawNum(16,2,s,P.WHITE);
+  }
+  // 右侧辅助徽章（命数/消行等）：调用方自己画图标 + 数字
+  function hudRight(w, draw){
+    chipBg(154-w,0,w,9);
+    draw();
+  }
+
+  // overlays（得分已改画布内像素 HUD，不再有 #score 浮层）
+  const elTitle=document.getElementById('title'),
+        elMsg=document.getElementById('msg'), elHint=document.getElementById('hint'),
+        gEl=[0,1,2,3].map(i=>document.getElementById('g'+i));
+  function show(el,on){ el.style.display = on?'block':'none'; }
+  function setText(el,t,color){ el.textContent=t; if(color) el.style.color=color; }
+
+  // ---- state ----
+  let screen='launcher', selected=0, current=0;
+  const NAMES=['贪吃蛇','打砖块','像素鸟','俄罗斯方块'];
+
+  // snake
+  let snake={seg:new Array(240).fill(0),len:3,dir:1,ndir:1,score:0,foodx:0,foody:0,step:0,dead:false,paused:false};
+  function snakeSpawnFood(){
+    for(;;){ const c=(Math.random()*24)|0, r=(Math.random()*18)|0; let on=false;
+      for(let i=0;i<snake.len;i++){ const s=snake.seg[i]; if((s&0xFF)===c && ((s>>8)&0xFF)===r){on=true;break;} }
+      if(!on){ snake.foodx=c; snake.foody=r; return; } }
+  }
+  function snakeReset(){ snake.len=3; snake.dir=1; snake.ndir=1; snake.dead=false; snake.paused=false; snake.score=0; snake.step=0;
+    const cx=12,cy=9; for(let i=0;i<snake.len;i++) snake.seg[i]=((cy&0xFF)<<8)|((cx-i)&0xFF); snakeSpawnFood(); }
+  function snakeStep(){
+    if(snake.paused||snake.dead) return;
+    if(snake.ndir===(snake.dir+2)%4) snake.ndir=snake.dir;
+    snake.dir=snake.ndir;
+    const head=snake.seg[0]; let col=head&0xFF, row=(head>>8)&0xFF; let dcol=0,drow=0;
+    if(snake.dir===0) drow=-1; else if(snake.dir===1) dcol=1; else if(snake.dir===2) drow=1; else dcol=-1;
+    const nc=col+dcol, nr=row+drow;
+    if(nc<0||nc>=24||nr<0||nr>=18){ snake.dead=true; return; }
+    const eat=(nc===snake.foodx&&nr===snake.foody);
+    const check_len=snake.len-(eat?0:1);
+    for(let i=0;i<check_len;i++){ const sx=snake.seg[i]&0xFF, sy=(snake.seg[i]>>8)&0xFF; if(sx===nc&&sy===nr){ snake.dead=true; return; } }
+    if(eat){ for(let i=snake.len;i>0;i--) snake.seg[i]=snake.seg[i-1]; snake.len++; }
+    else { for(let i=snake.len-1;i>0;i--) snake.seg[i]=snake.seg[i-1]; }
+    snake.seg[0]=((nr&0xFF)<<8)|(nc&0xFF);
+    if(eat){ snake.score++; snakeSpawnFood(); }
+  }
+  function snakeDraw(){
+    clear(P.BG);
+    rrect(4,10,152,114,5,P.EDGE);       // 圆角外框
+    rrect(5,11,150,112,4,P.PANEL);      // 面板
+    rrect(6,12,148,110,3,P.BG);         // 棋盘底
+    const dot=mix(P.BG,1.9);            // 极暗格点，增加质感
+    for(let gy=0;gy<18;gy++) for(let gx=0;gx<24;gx++) px(6+gx*6+3,12+gy*6+3,dot);
+    // 食物：苹果
+    const fx=6+snake.foodx*6, fy=12+snake.foody*6;
+    px(fx+3,fy+1,mix(P.GREEN,1.1));     // 梗
+    circle(fx+3,fy+4,2,P.RED);
+    px(fx+2,fy+2,mix(P.WHITE,1.0));     // 高光
+    // 蛇：尾→头，圆形串珠 + 渐变 + 眼睛
+    for(let i=snake.len-1;i>=0;i--){
+      const sx=snake.seg[i]&0xFF, sy=(snake.seg[i]>>8)&0xFF;
+      const t = snake.len>1 ? i/(snake.len-1) : 0;
+      const x=6+sx*6+3, y=12+sy*6+3;
+      if(i===0){                        // 头：凸出 + 眼睛
+        circle(x,y,3,mix(P.GREEN,1.3));
+        if(snake.dir===1){ px(x+2,y-2,P.WHITE); px(x+2,y+2,P.WHITE); }
+        else if(snake.dir===3){ px(x-2,y-2,P.WHITE); px(x-2,y+2,P.WHITE); }
+        else if(snake.dir===0){ px(x-2,y-2,P.WHITE); px(x+2,y-2,P.WHITE); }
+        else { px(x-2,y+2,P.WHITE); px(x+2,y+2,P.WHITE); }
+      } else {
+        circle(x,y,2, mix(P.GREEN, 1.15 - t*0.45));
+      }
+    }
+    // HUD：徽章内 苹果图标 + 得分
+    hudLeft(icoApple, snake.score);
+    if(snake.dead) showMsg('游戏结束  任意键重来');
+    else if(snake.paused) showMsg('已暂停  C 长按继续');
+    else showMsg('');
+  }
+
+  // breakout
+  let br={px:72,py:112,bx:80,by:108,bvx:1,bvy:-1,bricks:new Array(24).fill(1),score:0,lives:3,launched:false,dead:false,paused:false};
+  function brReset(){ br.px=72;br.py=112;br.bx=80;br.by=108;br.bvx=1;br.bvy=-1;br.launched=false;br.score=0;br.lives=3;br.dead=false;br.paused=false;
+    for(let i=0;i<24;i++) br.bricks[i]=1; }
+  function brStep(){
+    if(br.dead) return;
+    if(!br.launched){ br.bx=br.px+13; br.by=br.py-3; return; }
+    br.bx+=br.bvx; br.by+=br.bvy;
+    if(br.bx<7){ br.bx=7; br.bvx=-br.bvx; }
+    if(br.bx>152){ br.bx=152; br.bvx=-br.bvx; }
+    if(br.by<14){ br.by=14; br.bvy=-br.bvy; }
+    if(br.by>=br.py-3 && br.by<=br.py+4 && br.bx>=br.px && br.bx<=br.px+26){ br.bvy=-Math.abs(br.bvy); }
+    for(let r=0;r<4;r++) for(let c=0;c<6;c++){ const i=r*6+c; if(!br.bricks[i]) continue;
+      const bx=10+c*23, by=16+r*9;
+      if(br.bx+2>=bx && br.bx-2<=bx+20 && br.by>=by && br.by<=by+7){ br.bricks[i]=0; br.score+=10; br.bvy=-br.bvy; } }
+    if(br.by>122){ br.lives--; if(br.lives<=0){ br.dead=true; return; } br.launched=false; br.bx=br.px+13; br.by=br.py-3; }
+  }
+  function brDraw(){
+    clear(P.BG);
+    rrect(4,10,152,114,5,P.EDGE); rrect(5,11,150,112,4,P.PANEL); rrect(6,12,148,110,3,P.BG);
+    const rowc=[P.RED,P.ORANGE,P.WARM,P.YELLOW];  // 按行分色
+    for(let r=0;r<4;r++) for(let c=0;c<6;c++) if(br.bricks[r*6+c]) block3d(10+c*23,16+r*9,20,7,2,rowc[r]);
+    // 挡板：立体圆角
+    block3d(br.px,br.py,26,5,2,P.CYAN);
+    // 球：白圆 + 高光
+    circle(br.bx,br.by,2,P.WHITE);
+    px(br.bx-1,br.by-1,mix(P.WHITE,1.0));
+    // HUD：砖块图标 + 得分；右侧徽章用挡板小图标表示剩余命数
+    hudLeft(icoBrick, br.score);
+    const lw = br.lives*7 + 6;
+    hudRight(lw, ()=>{ for(let i=0;i<br.lives;i++) icoPaddle(154-lw+4+i*7, 3, P.CYAN); });
+    if(br.dead) showMsg('游戏结束  任意键重来');
+    else if(br.paused) showMsg('已暂停  C 长按继续');
+    else if(!br.launched) showMsg('A 发射 · C D 移动');
+    else showMsg('');
+  }
+
+  // flappy
+  let fl={by:64,bvy:0,px:[100,146,192,238],gap:[0,0,0,0],scored:[0,0,0,0],score:0,dead:false,paused:false};
+  function flReset(){ fl.by=64; fl.bvy=0; fl.score=0; fl.dead=false; fl.paused=false;
+    for(let i=0;i<4;i++){ fl.px[i]=100+i*46; fl.gap[i]=20+((Math.random()*48)|0); fl.scored[i]=0; } }
+  function flStep(dt){
+    if(fl.dead) return;
+    fl.bvy+=1; if(fl.bvy>3) fl.bvy=3;
+    fl.by+=fl.bvy; if(fl.by<10){ fl.by=10; fl.bvy=0; }
+    if(fl.by>116){ fl.dead=true; return; }
+    let rightmost=Math.max.apply(null,fl.px);
+    for(let i=0;i<4;i++){ fl.px[i]-=1;
+      if(fl.px[i]<-14){ rightmost+=46; fl.px[i]=rightmost; fl.gap[i]=20+((Math.random()*48)|0); fl.scored[i]=0; }
+      if(!fl.scored[i] && fl.px[i]+12<32){ fl.scored[i]=1; fl.score++; }
+      const g=fl.gap[i];
+      if(32+5>fl.px[i] && 32-5<fl.px[i]+12){ if(fl.by-4<g || fl.by+4>g+42){ fl.dead=true; return; } }
+    }
+  }
+  function drawPipe(x,y,w,h,isTop){
+    if(h<1) return;
+    rect(x+1,y,w-2,h,P.PIPE);
+    rect(x+1,y,2,h,mix(P.PIPE,1.28));
+    rect(x+w-3,y,2,h,mix(P.PIPE,0.68));
+    const ry = isTop ? y+h-4 : y;
+    rect(x-1,ry,w+2,4,mix(P.PIPE,1.12));
+    rect(x-1,ry,w+2,1,mix(P.PIPE,1.38));
+    rect(x-1,ry+3,w+2,1,mix(P.PIPE,0.58));
+  }
+  function flDraw(){
+    clear(P.SKY);
+    // 远景云
+    const cloud=mix(P.SKY,1.55);
+    for(const c of [[58,24],[122,34]]){ circle(c[0],c[1],3,cloud); circle(c[0]+4,c[1]-1,4,cloud); circle(c[0]+9,c[1],3,cloud); }
+    // 地面
+    rect(0,120,160,8,P.DIRT); rect(0,120,160,2,P.GRASS);
+    for(let i=0;i<16;i++) px(5+i*10,121,P.GRASS);
+    // 水管
+    for(let i=0;i<4;i++){ const p=fl.px[i], g=fl.gap[i];
+      drawPipe(p,14,12,g-14,true);
+      drawPipe(p,g+42,12,120-(g+42),false);
+    }
+    // 小鸟：身 + 翅 + 眼 + 喙
+    const bx=34, by=fl.by;
+    circle(bx,by,5,mix(P.WARM,0.85));
+    circle(bx,by-1,4,P.WARM);
+    rect(bx-4,by,3,3,mix(P.WARM,0.62));      // 翅膀
+    px(bx+2,by-2,P.WHITE); px(bx+3,by-2,P.BG); // 眼
+    rect(bx+4,by,3,2,P.ORANGE);              // 喙
+    // HUD：徽章内 小鸟图标 + 得分（徽章底让天空上的数字也清晰）
+    hudLeft(icoBird, fl.score);
+    if(fl.dead) showMsg('游戏结束  任意键重来'); else if(fl.paused) showMsg('已暂停  C 长按继续'); else showMsg('');
+  }
+
+  // tetris
+  const PIECE=[
+    [[[1,0],[0,1],[1,1],[2,1]],[[1,0],[1,1],[2,1],[1,2]],[[0,1],[1,1],[2,1],[1,2]],[[1,0],[0,1],[1,1],[1,2]]], // T
+    [[[0,0],[0,1],[1,1],[2,1]],[[1,0],[2,0],[1,1],[1,2]],[[0,1],[1,1],[2,1],[2,2]],[[1,0],[1,1],[0,2],[1,2]]], // J
+    [[[2,0],[0,1],[1,1],[2,1]],[[1,0],[1,1],[1,2],[2,2]],[[0,1],[1,1],[2,1],[0,2]],[[0,0],[1,0],[1,1],[1,2]]], // L
+    [[[1,0],[2,0],[1,1],[2,1]],[[1,0],[2,0],[1,1],[2,1]],[[1,0],[2,0],[1,1],[2,1]],[[1,0],[2,0],[1,1],[2,1]]], // O
+    [[[1,0],[2,0],[0,1],[1,1]],[[1,0],[1,1],[2,1],[2,2]],[[1,1],[2,1],[0,2],[1,2]],[[0,0],[0,1],[1,1],[1,2]]], // S
+    [[[0,0],[1,0],[1,1],[2,1]],[[2,0],[1,1],[2,1],[1,2]],[[0,1],[1,1],[1,2],[2,2]],[[1,0],[0,1],[1,1],[0,2]]], // Z
+    [[[0,0],[1,0],[2,0],[3,0]],[[2,0],[2,1],[2,2],[2,3]],[[0,1],[1,1],[2,1],[3,1]],[[1,0],[1,1],[1,2],[1,3]]]  // I
+  ];
+  const PCOL=[P.CYAN,P.BLUE,P.WARM,P.YELLOW,P.GREEN,P.PURPLE,P.RED];
+  let tet={well:new Array(180).fill(0),cur:0,curx:3,cury:0,rot:0,next:0,score:0,lines:0,dead:false,paused:false,fall:0};
+  function tetHit(type,x,y,r){ for(let i=0;i<4;i++){ const wx=x+PIECE[type][r][i][0], wy=y+PIECE[type][r][i][1];
+    if(wx<0||wx>=10||wy>=18) return true; if(wy>=0&&tet.well[wy*10+wx]) return true; } return false; }
+  function tetSpawn(){ tet.cur=tet.next; tet.next=(Math.random()*7)|0; tet.curx=3; tet.cury=0; tet.rot=0;
+    if(tetHit(tet.cur,tet.curx,tet.cury,0)) tet.dead=true; }
+  function tetReset(){ for(let i=0;i<180;i++) tet.well[i]=0; tet.score=0; tet.lines=0; tet.dead=false; tet.paused=false; tet.fall=0;
+    tet.next=(Math.random()*7)|0; tetSpawn(); }
+  function tetLock(){ for(let i=0;i<4;i++){ const wx=tet.curx+PIECE[tet.cur][tet.rot][i][0], wy=tet.cury+PIECE[tet.cur][tet.rot][i][1];
+      if(wy>=0&&wy<18&&wx>=0&&wx<10) tet.well[wy*10+wx]=tet.cur+1; }
+    let cleared=0;
+    for(let y=17;y>=0;y--){ let full=true; for(let x=0;x<10;x++) if(!tet.well[y*10+x]){ full=false; break; }
+      if(full){ for(let yy=y;yy>0;yy--) for(let x=0;x<10;x++) tet.well[yy*10+x]=tet.well[(yy-1)*10+x];
+        for(let x=0;x<10;x++) tet.well[x]=0; cleared++; y++; } }
+    if(cleared){ tet.lines+=cleared; tet.score+=(cleared===1?100:cleared===2?300:cleared===3?500:800); }
+    tetSpawn();
+  }
+  function tetStep(){ if(tet.dead) return; if(!tetHit(tet.cur,tet.curx,tet.cury+1,tet.rot)) tet.cury++; else tetLock(); }
+  function tetMove(dx){ if(tet.dead) return; if(!tetHit(tet.cur,tet.curx+dx,tet.cury,tet.rot)) tet.curx+=dx; }
+  function tetRotate(){ if(tet.dead) return; const nr=(tet.rot+1)%4; if(!tetHit(tet.cur,tet.curx,tet.cury,nr)) tet.rot=nr; }
+  function tetSoftDrop(){ if(tet.dead) return; if(!tetHit(tet.cur,tet.curx,tet.cury+1,tet.rot)){ tet.cury++; tet.score++; } else tetLock(); }
+  function tetHardDrop(){ if(tet.dead) return; while(!tetHit(tet.cur,tet.curx,tet.cury+1,tet.rot)){ tet.cury++; tet.score++; } tetLock(); }
+  function tetDraw(){
+    clear(P.BG);
+    // 井格：圆角外框 + 深内底
+    rrect(18,10,68,112,5,P.EDGE); rrect(19,11,66,110,4,mix(P.PANEL,0.72));
+    // 井格网格点：给空井一点质感，避免大片死黑
+    const gdot=mix(P.PANEL,1.35);
+    for(let gy=0;gy<=18;gy++) for(let gx=0;gx<=10;gx++) px(21+gx*6,13+gy*6,gdot);
+    // 已落方块 + 当前方块（立体）
+    for(let y=0;y<18;y++) for(let x=0;x<10;x++) if(tet.well[y*10+x]) block3d(21+x*6,13+y*6,6,6,1,PCOL[tet.well[y*10+x]-1]);
+    for(let i=0;i<4;i++){ const wx=tet.curx+PIECE[tet.cur][tet.rot][i][0], wy=tet.cury+PIECE[tet.cur][tet.rot][i][1];
+      if(wy>=0) block3d(21+wx*6,13+wy*6,6,6,1,PCOL[tet.cur]); }
+    // 预览窗：圆角
+    rrect(96,16,54,44,4,P.EDGE); rrect(97,17,52,42,3,mix(P.PANEL,0.86));
+    for(let i=0;i<4;i++){ const ox=PIECE[tet.next][0][i][0], oy=PIECE[tet.next][0][i][1]; block3d(104+ox*8,25+oy*8,7,7,1,PCOL[tet.next]); }
+    // HUD：方块图标 + 得分；右侧徽章 叠行图标 + 消行数
+    hudLeft(icoBlock, tet.score);
+    const ls = pad2(tet.lines), lw2 = 14 + ls.length*4;
+    hudRight(lw2, ()=>{ icoBars(154-lw2+4, 3); drawNum(154-lw2+11, 2, ls, P.WHITE); });
+    if(tet.dead) showMsg('游戏结束  任意键重来'); else if(tet.paused) showMsg('已暂停  C 长按继续'); else showMsg('');
+  }
+
+  // launcher
+  function drawLauncher(){
+    clear(P.BG);
+    const cx=[7,83,7,83], cy=[24,24,62,62], cw=70, ch=34;
+    const SHORT=['贪吃蛇','打砖块','小鸟','方块'];
+    const ICON=[P.GREEN,P.ORANGE,P.WARM,P.CYAN];
+    for(let i=0;i<4;i++){
+      const sel=(i===selected), base=sel?P.PANEL2:P.PANEL;
+      if(sel) rrect(cx[i]-2,cy[i]-2,cw+4,ch+4,6,P.WARM);   // 选中发光边
+      rrect(cx[i],cy[i],cw,ch,4,base);
+      for(let k=4;k<cw-4;k++) px(cx[i]+k,cy[i]+1,mix(base,1.55)); // 顶部高光
+      drawIcon(i, cx[i]+11, cy[i]+17, ICON[i]);
+      setText(gEl[i],SHORT[i], sel?'#ffd27a':'#9fb2cc'); show(gEl[i],true);
+      gEl[i].style.left=(cx[i]+24)+'px'; gEl[i].style.top=(cy[i]+10)+'px';
+    }
+    setText(elHint,'A 开始 · B/C 选择 · D 主页','#8fa3bd'); show(elHint,true);
+    show(elTitle,true); showMsg('');
+  }
+  function drawIcon(i,x,y,col){
+    if(i===0){ circle(x-3,y-3,2,col); circle(x+2,y,2,col); circle(x-3,y+3,2,col); }        // 蛇
+    else if(i===1){ rect(x-5,y-4,4,3,col); rect(x,y-4,4,3,col); rect(x-3,y,4,3,mix(col,1.25)); } // 砖块
+    else if(i===2){ circle(x,y,4,col); rect(x+3,y-1,3,2,P.ORANGE); px(x+1,y-2,P.BG); }    // 鸟
+    else { rect(x-3,y-5,6,3,col); rect(x-1,y-2,3,4,mix(col,1.25)); }                      // 方块
+  }
+  function showMsg(t){ if(t){ setText(elMsg,t,'#ffd27a'); show(elMsg,true); } else show(elMsg,false); }
+  function enterGame(g){ current=g; screen='play';
+    if(g===0) snakeReset(); else if(g===1) brReset(); else if(g===2) flReset(); else tetReset();
+    show(elTitle,false); show(elHint,false); for(let i=0;i<4;i++) show(gEl[i],false);
+    showMsg(gameHint(g));
+    hintTimer=setTimeout(()=>{ showMsg(''); hintTimer=0; }, 2000);
+  }
+  let hintTimer=0;
+  function gameHint(g){
+    if(g===0) return 'A上 B下 C左 D右';
+    if(g===1) return 'A发球 B暂停 C左 D右';
+    if(g===2) return 'A大跳 B中 C小 D轻点';
+    return 'A转 B落 C左 D右';
+  }
+  function isDead(){ if(current===0) return snake.dead; if(current===1) return br.dead; if(current===2) return fl.dead; return tet.dead; }
+  function isPaused(){ if(current===0) return snake.paused; if(current===1) return br.paused; if(current===2) return fl.paused; return tet.paused; }
+  function setPaused(p){ if(current===0) snake.paused=p; else if(current===1) br.paused=p; else if(current===2) fl.paused=p; else tet.paused=p; showMsg(''); }
+  function restart(){ if(current===0) snakeReset(); else if(current===1) brReset(); else if(current===2) flReset(); else tetReset();
+    screen='play'; showMsg(gameHint(current)); hintTimer=setTimeout(()=>{ showMsg(''); hintTimer=0; },2000); }
+  function exitToLauncher(){ screen='launcher'; show(elMsg,false); }
+
+  // key routing (mirrors desktop_board.cc page==1 + desktop_game.h Key)
+  // 单击/长按两档，长按统一：A开始/重开 B回列表 C暂停 D结束回主页
+  function routeKey(idx, isLong){
+    if(screen==='launcher'){
+      if(isLong) return;
+      if(idx===0) enterGame(selected);
+      else if(idx===1) selected=(selected+3)%4;
+      else if(idx===2) selected=(selected+1)%4;
+      return;
+    }
+    if(isLong){
+      if(idx===0) restart();
+      else if(idx===1) exitToLauncher();
+      else if(idx===2){ if(!isDead()) setPaused(!isPaused()); }
+      else exitToLauncher();   // D 长按 = 结束并回主页（预览里等同退出）
+      return;
+    }
+    if(isDead()){ restart(); return; }
+    if(isPaused()){ setPaused(false); return; }
+    switch(current){
+      case 0: // snake: A上 B下 C左 D右
+        if(idx===0) snake.ndir=0; else if(idx===1) snake.ndir=2;
+        else if(idx===2) snake.ndir=3; else snake.ndir=1;
+        break;
+      case 1: // breakout: A发球 B暂停 C左 D右
+        if(idx===0){ if(!br.launched){ br.launched=true; br.bvy=-1; } }
+        else if(idx===1) setPaused(!isPaused());
+        else if(idx===2) br.px=Math.max(6,br.px-20);
+        else br.px=Math.min(128,br.px+20);
+        break;
+      case 2: // flappy: 四键分档拍翅高度（与固件一致）
+        fl.bvy=[-8,-6,-5,-4][idx];
+        break;
+      case 3: // tetris: A旋转 B硬降 C左 D右
+        if(idx===0) tetRotate(); else if(idx===1) tetHardDrop();
+        else if(idx===2) tetMove(-1); else tetMove(1);
+        break;
+    }
+  }
+
+  // input
+  const KEYMAP={ 'a':0,'A':0,' ':0, 'b':1,'B':1,'ArrowLeft':1, 'c':2,'C':2,'ArrowRight':2,
+                 'd':3,'D':3,'ArrowDown':3 };
+  let holdTimer=0, heldIdx=-1;
+  window.addEventListener('keydown', function(e){
+    if(e.repeat) { e.preventDefault(); return; }
+    if(e.key==='Escape'||e.key==='Backspace'){ if(screen==='play') exitToLauncher(); e.preventDefault(); return; }
+    const idx=KEYMAP[e.key]; if(idx===undefined) return; e.preventDefault();
+    heldIdx=idx; routeKey(idx,false);
+    if(holdTimer) clearTimeout(holdTimer);
+    holdTimer=setTimeout(function(){ holdTimer=0; routeKey(idx,true); }, 900);
+  });
+  window.addEventListener('keyup', function(e){ if(holdTimer){ clearTimeout(holdTimer); holdTimer=0; } });
+
+  // main loop (40ms tick, like firmware lv_timer)
+  let last=performance.now();
+  let frozen=false;  // 截图哈希模式：进入游戏并手动推进后冻结，便于 headless 静态截图
+  function tick(){
+    if(frozen) return;
+    const now=performance.now(); const dt=now-last; last=now;
+    if(screen==='launcher'){ drawLauncher(); }
+    else {
+      if(current===0){ if(!snake.paused&&!snake.dead){ snake.step+=dt; if(snake.step>=200){ snake.step=0; snakeStep(); } } snakeDraw(); }
+      else if(current===1){ if(!br.dead&&!br.paused){ brStep(); brStep(); } brDraw(); }
+      else if(current===2){ if(!fl.dead&&!fl.paused) flStep(dt); flDraw(); }
+      else { if(!tet.dead&&!tet.paused){ tet.fall+=dt; if(tet.fall>=560){ tet.fall=0; tetStep(); } } tetDraw(); }
+    }
+    ctx.putImageData(img,0,0);
+  }
+  drawLauncher(); ctx.putImageData(img,0,0);
+
+  // 截图用：#g0..#g3 或 ?g=0..3 进入对应游戏并手动推进若干帧后冻结（不影响键盘试玩）
+  const _qp=new URLSearchParams(location.search);
+  let _h=(location.hash||'').toString().toLowerCase();
+  const _qg=_qp.get('g');
+  if(_qg!==null) _h='#g'+_qg;
+  if(_h==='#g0'||_h==='#g1'||_h==='#g2'||_h==='#g3'){
+    const k=parseInt(_h.slice(2),10);
+    enterGame(k);
+    if(k===0){  // 摆一条 U 形长蛇 + 食物，展示渐变/眼睛
+      snakeReset(); snake.len=8; snake.dir=1;
+      const cells=[[13,8],[12,8],[11,8],[10,8],[10,9],[10,10],[11,10],[12,10]];
+      for(let i=0;i<8;i++) snake.seg[i]=((cells[i][1]&0xFF)<<8)|(cells[i][0]&0xFF);
+      snake.foodx=16; snake.foody=8; snakeDraw();
+    }
+    else if(k===1){ br.launched=true; br.bvy=-1; for(let i=0;i<40;i++) brStep(); brDraw(); }
+    else if(k===2){ for(let i=0;i<4;i++) flStep(40); flDraw(); }
+    else if(k===3){ for(let p=0;p<3;p++){ for(let i=0;i<20;i++) tetStep(); } for(let i=0;i<7;i++) tetStep(); tetDraw(); }
+    ctx.putImageData(img,0,0);  // 冻结前把游戏画面刷到 canvas（draw* 只改内存 img）
+    frozen=true;
+  }
+
+  // 纯屏截图模式：?bare=1 隐藏标题/说明/图例，只留仿真屏
+  if(new URLSearchParams(location.search).get('bare')!==null){
+    document.body.style.padding='0';
+    document.body.style.background='#0a0e16';
+    ['h1','.sub','.legend'].forEach(function(s){ var e=document.querySelector(s); if(e) e.style.display='none'; });
+  }
+
+  setInterval(tick,33);
+})();
+</script>
+</body>
+</html>

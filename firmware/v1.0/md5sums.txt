@@ -1,0 +1,10 @@
+# AlphaPi OneS 4合1 v1.0 校验清单
+# 格式：md5  *文件名
+
+b16688411c68e57becaab9ef89d975e6  *AlphaPi-OneS-Desktop-Dark.bin
+6bbe215da33a337498bf277493618a88  *bootloader.bin
+6010f63a2f1b62a0a7229304d80cd03c  *partition-table.bin
+84d04c9d6cc8ef35bf825d51a5277699  *ota_data_initial.bin
+c23298d3f2ec5a67022336ba07be9a80  *assets.bin
+df58579d076342ee857233e6b6f27575  *AlphaPi-OneS-4in1-v1.0-full-8MB.bin
+8120a3c8f1d4cc4b5e60c8c8152963ae  *alphapi-one-s-web-flasher.html
