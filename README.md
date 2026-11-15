@@ -1,13 +1,13 @@
 # AlphaPi OneS 4合1 —— 小智 · 游戏 · 收音机 · 倒计时
 
-**版本 1.0**（2026-11-15）· 适用于 **AlphaPi One S**（ESP32-S2R2）
+**版本 1.1**（2026-11-15）· 适用于 **AlphaPi One S**（ESP32-S2R2）
 
 一台 160×128 的小屏桌面设备，四种玩法一键切换：跟小智说话、玩四款小游戏、听网络电台、做倒计时。外加班表主页和手机网页后台。
 
 ![界面总览](docs/desktop-preview.png)
 
 > 上排：主页 · 小智 · 游戏　下排：收音机 · 倒计时。
-> 五屏全部由 v1.0 固件的 **LVGL 页面代码逐像素重放**生成：字体取自 assets 分区的
+> 五屏全部由 v1.1 固件的 **LVGL 页面代码逐像素重放**生成：字体取自 assets 分区的
 > `font_puhui_deepseek_14_1.bin` 与 LVGL 内置 Montserrat，图标取自
 > `desktop_assets.h` 的 32×32 RGB565 位图，坐标、圆角、配色与 `desktop_ui.h`
 > 一一对应。时间、日期、气温为示例数据。
@@ -17,6 +17,10 @@
 [游戏](docs/screen-game.png) ·
 [收音机](docs/screen-radio.png) ·
 [倒计时](docs/screen-timer.png)
+
+> **刷完开不了机、一直重启？** 直接用 v1.1 重刷，并勾选网页刷机页的
+> 「擦除整个 Flash」。仍不行请看 [`BOOT-TROUBLESHOOTING.md`](firmware/v1.1/BOOT-TROUBLESHOOTING.md)，
+> 或双击 `run-boot-diag.cmd` 抓一份日志。
 
 ---
 
@@ -29,6 +33,7 @@
 - [刷机](#刷机)
 - [首次使用流程](#首次使用流程)
 - [校验值](#校验值)
+- [1.1 版本说明](#11-版本说明)
 - [1.0 版本说明](#10-版本说明)
 - [已知限制](#已知限制)
 - [从源码编译](#从源码编译)
@@ -198,22 +203,22 @@
 
 - 一根能传数据的 USB 线（有些线只供电）；
 - Windows / macOS / Linux 电脑；
-- 本仓库 `firmware/v1.0/` 下的文件。
+- 本仓库 `firmware/v1.1/` 下的文件。
 
 **进刷机模式**：USB 连接电脑 → 电源开关拨到关 → **按住 BOOT 键** → 开机 → 等 2 秒松开 BOOT。
 
 ### 方式一：网页刷机（推荐，免装工具）
 
-1. 用 **Chrome / Edge**（需支持 WebSerial）打开 `firmware/v1.0/alphapi-one-s-web-flasher.html`；
+1. 用 **Chrome / Edge**（需支持 WebSerial）打开 `firmware/v1.1/alphapi-one-s-web-flasher.html`；
 2. 点「连接」选串口；
 3. 按提示刷写。全程约 1–2 分钟，页面会显示每一段进度。
 
-也可以双击 `firmware/v1.0/start-web-flasher.cmd` 起本地服务再打开页面。
+也可以双击 `firmware/v1.1/start-web-flasher.cmd` 起本地服务再打开页面。
 
 ### 方式二：命令行脚本
 
 ```bat
-:: 在 firmware\v1.0\ 目录下双击，或命令行运行
+:: 在 firmware\v1.1\ 目录下双击，或命令行运行
 flash.cmd
 :: 按提示输入串口号（例如 COM17）
 ```
@@ -223,10 +228,10 @@ flash.cmd
 ### 方式三：完整固件一次性刷（最简单）
 
 ```bash
-esptool.py --chip esp32s2 --port COM17 write_flash 0x0 AlphaPi-OneS-4in1-v1.0-full-8MB.bin
+esptool.py --chip esp32s2 --port COM17 write_flash 0x0 AlphaPi-OneS-4in1-v1.1-full-8MB.bin
 ```
 
-`AlphaPi-OneS-4in1-v1.0-full-8MB.bin` 已经把五段按地址拼好，适合救砖/整片重刷。
+`AlphaPi-OneS-4in1-v1.1-full-8MB.bin` 已经把五段按地址拼好，适合救砖/整片重刷。
 
 ### 五段地址对照（精细刷写 / 只刷某一段时用）
 
@@ -272,21 +277,52 @@ esptool.py --chip esp32s2 --port COM17 --baud 921600 write_flash \
 
 ## 校验值
 
-**应用固件** `firmware/v1.0/AlphaPi-OneS-Desktop-Dark.bin`
-`2,692,944 B` · md5 `b16688411c68e57becaab9ef89d975e6`
+**应用固件** `firmware/v1.1/AlphaPi-OneS-Desktop-Dark.bin`
+`2,694,912 B` · md5 `88afcb4be90682f28b0ae10ed1f5d30e`
 
-**完整固件** `firmware/v1.0/AlphaPi-OneS-4in1-v1.0-full-8MB.bin`
-`7,108,247 B` · md5 `df58579d076342ee857233e6b6f27575`
+**完整固件** `firmware/v1.1/AlphaPi-OneS-4in1-v1.1-full-8MB.bin`
+`7,108,247 B` · md5 `1b0a072a3d4848ef06c7211f1fa4c609`
 
-五段各自 md5 见 `firmware/v1.0/md5sums.txt`：
+五段各自 md5 见 `firmware/v1.1/md5sums.txt`：
 
 | 文件 | md5 |
 |---|---|
-| `AlphaPi-OneS-Desktop-Dark.bin` | `b16688411c68e57becaab9ef89d975e6` |
+| `AlphaPi-OneS-Desktop-Dark.bin` | `88afcb4be90682f28b0ae10ed1f5d30e` |
 | `bootloader.bin` | `6bbe215da33a337498bf277493618a88` |
 | `partition-table.bin` | `6010f63a2f1b62a0a7229304d80cd03c` |
 | `ota_data_initial.bin` | `84d04c9d6cc8ef35bf825d51a5277699` |
 | `assets.bin` | `c23298d3f2ec5a67022336ba07be9a80` |
+
+---
+
+## 1.1 版本说明
+
+**1.1 只做一件事：让"别人的板子"不再因为硬件批次差异变成砖。**
+
+使用者反馈：刷完 1.0 开不了机、一直重启，而开发机（同为 `v1.7` 丝印）完全正常。
+
+根因不在应用逻辑。这块板内部 DRAM 已用到 99.9%（`DIRAM` 只剩 199 B），LVGL 与显示缓冲
+全压在外挂 PSRAM 上，整机对 PSRAM 是硬依赖；而启动链上有三处"条件不满足就直接 abort"：
+
+1. `CONFIG_SPIRAM_IGNORE_NOTFOUND` 未开 —— PSRAM 初始化失败即 abort，芯片在 `app_main`
+   之前反复复位。同一版型不同批次换 PSRAM 型号（或没焊）时，就会这台正常、那台死循环。
+2. `main.cc` 里 `ESP_ERROR_CHECK(nvs_flash_init())` —— NVS 分区读异常直接 abort 重启。
+   NVS 只存配网信息，丢了顶多重新配网，不该让整机起不来。
+3. 显示帧缓冲 40 KB 与 LVGL 绘制缓冲 5 KB 只从 PSRAM 取，取不到就静默 `return false`，
+   屏幕不工作且不给任何原因。
+
+对应改动：
+
+- **打开 `CONFIG_SPIRAM_IGNORE_NOTFOUND`**：PSRAM 拿不到只打警告并继续跑。
+  这是最关键的一条，它把"变砖"降级成"降级运行"。
+- **NVS 失败不再 abort**，记录后继续。
+- **两块缓冲增加内部 RAM 回退**，并在降级时打日志。
+- **新增启动自检**：`app_main` 一进来就打印复位原因、assets 分区地址、PSRAM 是否可用与容量、
+  内部堆余量。以后再遇到"某台机器起不来"，一张串口截图就能定位。
+- **发布包新增 `run-boot-diag.cmd`**（零依赖，双击抓 20 秒串口日志）与
+  `BOOT-TROUBLESHOOTING.md`（按可能性排序的排查手册）。
+
+对正常机器（PSRAM 完好）**行为与 1.0 完全一致**，改动全部落在异常路径上。
 
 ---
 
@@ -344,7 +380,7 @@ idf.py -B build -D IDF_TARGET=esp32s2 \
 - 板级代码在 `main/boards/alphapi-one-s-desktop/`，`main/CMakeLists.txt` 已固定选这块板，不要用上游多板脚本切换型号。
 - 当前占用：app 2,692,944 B / app 分区 5 MB（约 53%，余量 47%）。
 
-源码包：`source/AlphaPi-OneS-4in1-source-v1.0.zip`（不含 `build/`、`managed_components/` 等生成物，约 20 MB）。
+源码包：`source/AlphaPi-OneS-4in1-source-v1.1.zip`（不含 `build/`、`managed_components/` 等生成物，约 20 MB）。
 
 ---
 
@@ -363,20 +399,23 @@ AlphaPi-OneS-4in1/
 │   ├── screen-game.png        # 游戏列表单屏
 │   ├── screen-radio.png       # 收音机单屏
 │   └── screen-timer.png       # 倒计时单屏
-├── firmware/v1.0/
+├── firmware/v1.1/
 │   ├── AlphaPi-OneS-Desktop-Dark.bin      # 应用固件（写 0x20000）
 │   ├── bootloader.bin                     # 写 0x1000
 │   ├── partition-table.bin                # 写 0x8000
 │   ├── ota_data_initial.bin               # 写 0xD000
 │   ├── assets.bin                         # 写 0x500000（字库 + 表情）
-│   ├── AlphaPi-OneS-4in1-v1.0-full-8MB.bin # 完整固件（写 0x0）
+│   ├── AlphaPi-OneS-4in1-v1.1-full-8MB.bin # 完整固件（写 0x0）
 │   ├── alphapi-one-s-web-flasher.html     # 网页刷机器
 │   ├── start-web-flasher.cmd              # 起本地服务打开网页刷机
 │   ├── flash.cmd / flash_cli.cmd / flash_cli.py
 │   ├── flash_args.txt                     # esptool 参数
+│   ├── run-boot-diag.cmd                  # 双击抓启动日志（零依赖）
+│   ├── ones_boot_diag.ps1                 # 上者调用的脚本
+│   ├── BOOT-TROUBLESHOOTING.md            # 开不了机排查手册
 │   └── md5sums.txt
 └── source/
-    └── AlphaPi-OneS-4in1-source-v1.0.zip  # 完整工程源码
+    └── AlphaPi-OneS-4in1-source-v1.1.zip  # 完整工程源码
 ```
 
 ---

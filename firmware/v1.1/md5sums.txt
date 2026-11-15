@@ -1,0 +1,6 @@
+6bbe215da33a337498bf277493618a88  bootloader.bin
+6010f63a2f1b62a0a7229304d80cd03c  partition-table.bin
+84d04c9d6cc8ef35bf825d51a5277699  ota_data_initial.bin
+88afcb4be90682f28b0ae10ed1f5d30e  AlphaPi-OneS-Desktop-Dark.bin
+c23298d3f2ec5a67022336ba07be9a80  assets.bin
+1b0a072a3d4848ef06c7211f1fa4c609  AlphaPi-OneS-4in1-v1.1-full-8MB.bin
