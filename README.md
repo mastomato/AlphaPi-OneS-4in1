@@ -1,13 +1,13 @@
-# AlphaPi OneS 4合1 —— 小智 · 游戏 · 收音机 · 倒计时
+# AlphaPi OneS 5合1 —— 小智 · 游戏 · 收音机 · 倒计时 · 节拍器
 
-**版本 1.1**（2026-11-15）· 适用于 **AlphaPi One S**（ESP32-S2R2）
+**版本 1.2**（2026-11-15）· 适用于 **AlphaPi One S**（ESP32-S2R2）
 
-一台 160×128 的小屏桌面设备，四种玩法一键切换：跟小智说话、玩四款小游戏、听网络电台、做倒计时。外加班表主页和手机网页后台。
+一台 160×128 的小屏桌面设备，五种玩法一键切换：跟小智说话、玩四款小游戏、听网络电台、做倒计时、打节拍。外加班表主页和手机网页后台。
 
 ![界面总览](docs/desktop-preview.png)
 
-> 上排：主页 · 小智 · 游戏　下排：收音机 · 倒计时。
-> 五屏全部由 v1.1 固件的 **LVGL 页面代码逐像素重放**生成：字体取自 assets 分区的
+> 上排：主页 · 小智 · 游戏　下排：收音机 · 倒计时 · 节拍器（在倒计时页里长按 B 切换）。
+> 六屏全部由 v1.2 固件的 **LVGL 页面代码逐像素重放**生成：字体取自 assets 分区的
 > `font_puhui_deepseek_14_1.bin` 与 LVGL 内置 Montserrat，图标取自
 > `desktop_assets.h` 的 32×32 RGB565 位图，坐标、圆角、配色与 `desktop_ui.h`
 > 一一对应。时间、日期、气温为示例数据。
@@ -16,10 +16,11 @@
 [小智](docs/screen-voice.png) ·
 [游戏](docs/screen-game.png) ·
 [收音机](docs/screen-radio.png) ·
-[倒计时](docs/screen-timer.png)
+[倒计时](docs/screen-timer.png) ·
+[节拍器](docs/screen-metro.png)
 
-> **刷完开不了机、一直重启？** 直接用 v1.1 重刷，并勾选网页刷机页的
-> 「擦除整个 Flash」。仍不行请看 [`BOOT-TROUBLESHOOTING.md`](firmware/v1.1/BOOT-TROUBLESHOOTING.md)，
+> **刷完开不了机、一直重启？** 直接用 v1.2 重刷，并勾选网页刷机页的
+> 「擦除整个 Flash」。仍不行请看 [`BOOT-TROUBLESHOOTING.md`](firmware/v1.2/BOOT-TROUBLESHOOTING.md)，
 > 或双击 `run-boot-diag.cmd` 抓一份日志。
 
 ---
@@ -33,6 +34,7 @@
 - [刷机](#刷机)
 - [首次使用流程](#首次使用流程)
 - [校验值](#校验值)
+- [1.2 版本说明](#12-版本说明)
 - [1.1 版本说明](#11-版本说明)
 - [1.0 版本说明](#10-版本说明)
 - [已知限制](#已知限制)
@@ -49,7 +51,8 @@
 | **小智语音助手** | 深色动态表情页（64×64 表情动画 + 状态文字），按键唤起对话，云端 ASR → LLM → TTS；状态（待命 / 聆听 / 说话 / 处理中）实时显示 | 主页短按 **B** |
 | **网络收音机** | 54 个内置电台（济南、山东、央广、京沪、各省重点台、特色音乐台），支持自定义 MP3 直链、可增可删；播放时按音频实时电平画波形 | 主页短按 **C** |
 | **游戏（4 款）** | 贪吃蛇、打砖块、像素鸟、俄罗斯方块，带启动器、计分 HUD、通关判定与音效 | 主页短按 **A** |
-| **倒计时** | 1–5999 秒，分钟/秒字段分别调整，结束三声提示音 + 闪烁「时间到」 | 主页短按 **D** |
+| **倒计时** | 1–5999 秒，分/秒分别调整，跑表时每秒读秒声（最后 3 秒变高音），结束三声提示 + 闪烁「时间到」 | 主页短按 **D** |
+| **节拍器** | 40–240 BPM，2/4–6/4 拍号，重拍高音，拍点 + 拍内进度条；在倒计时页里长按 **B** 切换 | 倒计时页长按 **B** |
 | **表盘主页** | 大号时间（时:分）、日期星期、城市 / 气温 / 天气、Wi-Fi 信号格，下方四个功能图标 | 开机即是 |
 | **手机网页后台** | 连 `AlphaPi-Desk` 热点后打开 `192.168.4.1`：配 Wi-Fi、选天气城市、远程控制收音机、管理自定义电台、查看键位 | 主页长按 **A** |
 
@@ -84,9 +87,20 @@
 
 ### 倒计时
 
-- 进入即显示上次设定的时长，**A** 开始 / 暂停，**B** 切换「分 / 秒」字段，**C** 减少、**D** 增加，长按 **A** 一键重置。
+- 进入即显示上次设定的时长，**A** 开始 / 暂停，**B** 切换「分 / 秒 / 读秒声」，**C** 减少、**D** 增加，长按 **A** 一键重置。
+- **读秒声**：跑表时每秒一声短促的「嗒」，最后 3 秒音高抬高；**跑表过程中直接按 B 就能开关**（提示行显示「B静音 / B开声」）。开关状态掉电保存。
 - 倒计时结束：屏幕闪烁「时间到」，并响三声提示音；**任意键**确认并回到设定值。
-- 设定值断电保存。收音机页 / 小智页不会响提示音（半双工，避免打断音频流）。
+- 设定值断电保存。小智页 / 收音机页不会响提示音（半双工，避免打断音频流）。
+
+### 节拍器
+
+倒计时页的第二个子界面，**长按 B 切换**过去，再长按 B 回来（切进去后底部会提示）。
+
+- 速度 **40–240 BPM**（每档 5），拍号 **2/4 · 3/4 · 4/4 · 5/4 · 6/4**，屏幕上一排拍点就是小节拍数。
+- 每小节第一拍音高更高（1568 Hz），其余拍 1047 Hz，不看屏幕也能听出小节头。
+- 画面：28px BPM 数字 + 拍点（点亮 140ms）+ 拍内进度条，整页以暖黄为主色。
+- 拍点用绝对时间网格累加，长时间跑不会越拖越慢；偶发欠拍不补打。
+- 速度与拍号掉电保存。
 
 ---
 
@@ -162,11 +176,20 @@
 | 按键 | 单击 | 长按 |
 |---|---|---|
 | A | 开始 / 暂停 | 重置为设定值 |
-| B | 切换编辑字段（分 / 秒） | 音量 − |
-| C | 减少（分或秒） | 音量 + |
-| D | 增加（分或秒） | 回主页 |
+| B | 切换编辑项（分 / 秒 / 读秒声）；跑表时直接开关读秒声 | **切换到节拍器** |
+| C | 减少（分或秒；声音项 = 关） | 音量 + |
+| D | 增加（分或秒；声音项 = 开） | 回主页 |
 
 结束后任意键确认。
+
+### 节拍器页（倒计时页内，长按 B 进入）
+
+| 按键 | 单击 | 长按 |
+|---|---|---|
+| A | 开始 / 停止打拍 | 复位 120 BPM / 4-4 |
+| B | 切换编辑项（BPM / 拍号） | **切回倒计时** |
+| C | 减少（BPM −5 或拍号 −1） | 音量 + |
+| D | 增加（BPM +5 或拍号 +1） | 回主页 |
 
 ### 配网页（主页长按 A 进入）
 
@@ -203,22 +226,22 @@
 
 - 一根能传数据的 USB 线（有些线只供电）；
 - Windows / macOS / Linux 电脑；
-- 本仓库 `firmware/v1.1/` 下的文件。
+- 本仓库 `firmware/v1.2/` 下的文件。
 
 **进刷机模式**：USB 连接电脑 → 电源开关拨到关 → **按住 BOOT 键** → 开机 → 等 2 秒松开 BOOT。
 
 ### 方式一：网页刷机（推荐，免装工具）
 
-1. 用 **Chrome / Edge**（需支持 WebSerial）打开 `firmware/v1.1/alphapi-one-s-web-flasher.html`；
+1. 用 **Chrome / Edge**（需支持 WebSerial）打开 `firmware/v1.2/alphapi-one-s-web-flasher.html`；
 2. 点「连接」选串口；
 3. 按提示刷写。全程约 1–2 分钟，页面会显示每一段进度。
 
-也可以双击 `firmware/v1.1/start-web-flasher.cmd` 起本地服务再打开页面。
+也可以双击 `firmware/v1.2/start-web-flasher.cmd` 起本地服务再打开页面。
 
 ### 方式二：命令行脚本
 
 ```bat
-:: 在 firmware\v1.1\ 目录下双击，或命令行运行
+:: 在 firmware\v1.2\ 目录下双击，或命令行运行
 flash.cmd
 :: 按提示输入串口号（例如 COM17）
 ```
@@ -228,10 +251,10 @@ flash.cmd
 ### 方式三：完整固件一次性刷（最简单）
 
 ```bash
-esptool.py --chip esp32s2 --port COM17 write_flash 0x0 AlphaPi-OneS-4in1-v1.1-full-8MB.bin
+esptool.py --chip esp32s2 --port COM17 write_flash 0x0 AlphaPi-OneS-4in1-v1.2-full-8MB.bin
 ```
 
-`AlphaPi-OneS-4in1-v1.1-full-8MB.bin` 已经把五段按地址拼好，适合救砖/整片重刷。
+`AlphaPi-OneS-4in1-v1.2-full-8MB.bin` 已经把五段按地址拼好，适合救砖/整片重刷。
 
 ### 五段地址对照（精细刷写 / 只刷某一段时用）
 
@@ -240,7 +263,7 @@ esptool.py --chip esp32s2 --port COM17 write_flash 0x0 AlphaPi-OneS-4in1-v1.1-fu
 | `0x1000` | `bootloader.bin` | 16,080 | 二级引导 |
 | `0x8000` | `partition-table.bin` | 3,072 | 分区表 |
 | `0xD000` | `ota_data_initial.bin` | 8,192 | OTA 标记（清空选择） |
-| `0x20000` | `AlphaPi-OneS-Desktop-Dark.bin` | 2,692,944 | 应用固件（app 分区 5 MB） |
+| `0x20000` | `AlphaPi-OneS-Desktop-Dark.bin` | 2,700,064 | 应用固件（app 分区 5 MB） |
 | `0x500000` | `assets.bin` | 1,865,367 | 资源包：中文普惠体字库 + 21 个表情（2 MB 分区） |
 
 完整命令：
@@ -277,21 +300,64 @@ esptool.py --chip esp32s2 --port COM17 --baud 921600 write_flash \
 
 ## 校验值
 
-**应用固件** `firmware/v1.1/AlphaPi-OneS-Desktop-Dark.bin`
-`2,694,912 B` · md5 `88afcb4be90682f28b0ae10ed1f5d30e`
+**应用固件** `firmware/v1.2/AlphaPi-OneS-Desktop-Dark.bin`
+`2,700,064 B` · md5 `0915a5a3407e328a660c6a73a0af7531`
 
-**完整固件** `firmware/v1.1/AlphaPi-OneS-4in1-v1.1-full-8MB.bin`
-`7,108,247 B` · md5 `1b0a072a3d4848ef06c7211f1fa4c609`
+**完整固件** `firmware/v1.2/AlphaPi-OneS-4in1-v1.2-full-8MB.bin`
+`7,108,247 B` · md5 `4ff967dfc9b1831b0f8d3731d05ca9ef`
 
-五段各自 md5 见 `firmware/v1.1/md5sums.txt`：
+五段各自 md5 见 `firmware/v1.2/md5sums.txt`：
 
 | 文件 | md5 |
 |---|---|
-| `AlphaPi-OneS-Desktop-Dark.bin` | `88afcb4be90682f28b0ae10ed1f5d30e` |
+| `AlphaPi-OneS-Desktop-Dark.bin` | `0915a5a3407e328a660c6a73a0af7531` |
 | `bootloader.bin` | `6bbe215da33a337498bf277493618a88` |
 | `partition-table.bin` | `6010f63a2f1b62a0a7229304d80cd03c` |
 | `ota_data_initial.bin` | `84d04c9d6cc8ef35bf825d51a5277699` |
 | `assets.bin` | `c23298d3f2ec5a67022336ba07be9a80` |
+
+---
+
+## 1.2 版本说明
+
+**1.2 是内容版：加节拍器、补全游戏音效、倒计时加读秒声。**
+
+起因是三条实机反馈：游戏只有失败 / 结束才响、倒计时想有读秒声并有按键开关、想要节拍器。
+
+### 一、游戏为什么只有长音听得到
+
+死亡 / 结束那几声是 160–260 ms 的低频方波，而碰撞、按键、得分全是 18–30 ms 的短音。
+短流写到 N32 后，芯片还没真正开播就被判为一段会话结束——所以长音能听到、短音静默。
+这是**时长**问题，不是频率问题。
+
+- 新增 `type=2` 音色：**方波 + 指数衰减**（60 ms 落到底），听感是「嗒 / 叮」而不是「嘟」。
+  刻意不用正弦——这台小喇叭上一直能听到的就是方波。
+- `type=2` 的流至少持续 **160 ms**：音调仍短，补的是尾部静音，只为让芯片来得及开播。
+- 每个动作都有声：蛇转向、方块左右移动 / 旋转、砖块碰撞、挡板反弹、小鸟拍翅、
+  吃食物、消行、过关，各自有区分的音高（280–1000 Hz）。
+
+### 二、倒计时读秒声
+
+- 跑表时每秒一声「嗒」，**最后 3 秒音高抬高**（1700 Hz），到点仍是原来的三声提示。
+- **跑表时短按 B 直接开关**；停止态按 B 轮到「读秒声」，C 关 D 开。开关掉电保存。
+- 小智页 / 收音机页后台走表时不响（半双工，避免打断识别或收流）。
+
+### 三、节拍器
+
+做成**倒计时页的子界面**（长按 B 切换），不新增主页图标：
+
+- 40–240 BPM，2/4–6/4 拍号，重拍 1568 Hz、弱拍 1047 Hz。
+- 28px BPM 数字 + 拍点 + 拍内进度条，整页以暖黄为主色。
+- 拍点用绝对时间网格累加，20 ms 的 UI 调度抖动不会累积成节奏漂移。
+
+### 四、配网界面显示路由器地址
+
+关掉热点后，配网页中间那行从固定的 `192.168.4.1` 改成 `路由 192.168.1.23`（设备从家里
+路由器拿到的地址），上面一行同时显示当前家庭 Wi-Fi 名；没连上显示 `未连接路由`。
+
+### 五、配色
+
+跑表时数字与进度条转暖黄；节拍器的标题、BPM 数字、重拍点、进度条同色，青色留给拍点与编辑态。
 
 ---
 
@@ -378,9 +444,9 @@ idf.py -B build -D IDF_TARGET=esp32s2 \
 
 - 首次编译需要联网拉依赖（`idf.py` 自动处理），保留 `source/` 包里的 `dependencies.lock` 以固定版本。
 - 板级代码在 `main/boards/alphapi-one-s-desktop/`，`main/CMakeLists.txt` 已固定选这块板，不要用上游多板脚本切换型号。
-- 当前占用：app 2,692,944 B / app 分区 5 MB（约 53%，余量 47%）。
+- 当前占用：app 2,700,064 B / app 分区 5 MB（约 53%，余量 47%）。
 
-源码包：`source/AlphaPi-OneS-4in1-source-v1.1.zip`（不含 `build/`、`managed_components/` 等生成物，约 20 MB）。
+源码包：`source/AlphaPi-OneS-4in1-source-v1.2.zip`（不含 `build/`、`managed_components/` 等生成物，约 20 MB）。
 
 ---
 
@@ -393,19 +459,20 @@ AlphaPi-OneS-4in1/
 ├── LICENSE                    # MIT（继承上游）
 ├── THIRD_PARTY_NOTICES.md     # 第三方组件声明
 ├── docs/
-│   ├── desktop-preview.png    # 五屏总览（由固件绘制代码逐像素重放）
+│   ├── desktop-preview.png    # 六屏总览（由固件绘制代码逐像素重放）
 │   ├── screen-home.png        # 主页单屏
 │   ├── screen-voice.png       # 小智单屏
 │   ├── screen-game.png        # 游戏列表单屏
 │   ├── screen-radio.png       # 收音机单屏
-│   └── screen-timer.png       # 倒计时单屏
-├── firmware/v1.1/
+│   ├── screen-timer.png       # 倒计时单屏
+│   └── screen-metro.png       # 节拍器单屏（倒计时页内）
+├── firmware/v1.2/
 │   ├── AlphaPi-OneS-Desktop-Dark.bin      # 应用固件（写 0x20000）
 │   ├── bootloader.bin                     # 写 0x1000
 │   ├── partition-table.bin                # 写 0x8000
 │   ├── ota_data_initial.bin               # 写 0xD000
 │   ├── assets.bin                         # 写 0x500000（字库 + 表情）
-│   ├── AlphaPi-OneS-4in1-v1.1-full-8MB.bin # 完整固件（写 0x0）
+│   ├── AlphaPi-OneS-4in1-v1.2-full-8MB.bin # 完整固件（写 0x0）
 │   ├── alphapi-one-s-web-flasher.html     # 网页刷机器
 │   ├── start-web-flasher.cmd              # 起本地服务打开网页刷机
 │   ├── flash.cmd / flash_cli.cmd / flash_cli.py
@@ -415,7 +482,7 @@ AlphaPi-OneS-4in1/
 │   ├── BOOT-TROUBLESHOOTING.md            # 开不了机排查手册
 │   └── md5sums.txt
 └── source/
-    └── AlphaPi-OneS-4in1-source-v1.1.zip  # 完整工程源码
+    └── AlphaPi-OneS-4in1-source-v1.2.zip  # 完整工程源码
 ```
 
 ---
