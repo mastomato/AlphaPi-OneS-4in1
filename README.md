@@ -16,8 +16,10 @@
 [小智](docs/screen-voice.png) ·
 [游戏](docs/screen-game.png) ·
 [收音机](docs/screen-radio.png) ·
-[倒计时](docs/screen-timer.png) ·
-[节拍器](docs/screen-metro.png)
+[计时目录](docs/screen-timermenu.png) ·
+[定时器](docs/screen-timer.png) ·
+[节拍器](docs/screen-metro.png) ·
+[秒表](docs/screen-stopwatch.png)
 
 > **刷完开不了机、一直重启？** 优先用 v1.3 重刷——它开机第一屏会显示硬件诊断信息并停留约 1.2 秒，
 > 连续 3 次启动失败会直接进入 SAFE MODE 把现场留在屏幕上（拍张照即可定位）。勾选网页刷机页的
@@ -569,8 +571,10 @@ AlphaPi-OneS-4in1/
 │   ├── screen-voice.png       # 小智单屏
 │   ├── screen-game.png        # 游戏列表单屏
 │   ├── screen-radio.png       # 收音机单屏
-│   ├── screen-timer.png       # 计时页（目录 + 定时器 / 节拍器 / 秒表）
-│   └── screen-metro.png       # 节拍器子视图
+│   ├── screen-timermenu.png   # 计时目录（三张卡片）
+│   ├── screen-timer.png       # 定时器子视图
+│   ├── screen-metro.png       # 节拍器子视图
+│   └── screen-stopwatch.png   # 秒表子视图
 ├── firmware/v1.3/                          # 推荐版（另有 v1.2.1 / v1.2 可回退）
 │   ├── AlphaPi-OneS-Desktop-Dark.bin      # 应用固件（写 0x20000）
 │   ├── bootloader.bin                     # 写 0x1000
