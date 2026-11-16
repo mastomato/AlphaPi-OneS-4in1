@@ -1,13 +1,13 @@
 # AlphaPi OneS 5合1 —— 小智 · 游戏 · 收音机 · 倒计时 · 节拍器
 
-**版本 1.2**（2026-11-15）· 适用于 **AlphaPi One S**（ESP32-S2R2）
+**版本 1.3**（2026-11-16）· 适用于 **AlphaPi One S**（ESP32-S2R2）
 
 一台 160×128 的小屏桌面设备，五种玩法一键切换：跟小智说话、玩四款小游戏、听网络电台、做倒计时、打节拍。外加班表主页和手机网页后台。
 
 ![界面总览](docs/desktop-preview.png)
 
 > 上排：主页 · 小智 · 游戏　下排：收音机 · 倒计时 · 节拍器（在倒计时页里长按 B 切换）。
-> 六屏全部由 v1.2 固件的 **LVGL 页面代码逐像素重放**生成：字体取自 assets 分区的
+> 六屏全部由 v1.3 固件的 **LVGL 页面代码逐像素重放**生成：字体取自 assets 分区的
 > `font_puhui_deepseek_14_1.bin` 与 LVGL 内置 Montserrat，图标取自
 > `desktop_assets.h` 的 32×32 RGB565 位图，坐标、圆角、配色与 `desktop_ui.h`
 > 一一对应。时间、日期、气温为示例数据。
@@ -19,8 +19,9 @@
 [倒计时](docs/screen-timer.png) ·
 [节拍器](docs/screen-metro.png)
 
-> **刷完开不了机、一直重启？** 直接用 v1.2 重刷，并勾选网页刷机页的
-> 「擦除整个 Flash」。仍不行请看 [`BOOT-TROUBLESHOOTING.md`](firmware/v1.2/BOOT-TROUBLESHOOTING.md)，
+> **刷完开不了机、一直重启？** 优先用 v1.3 重刷——它开机第一屏会显示硬件诊断信息并停留约 1.2 秒，
+> 连续 3 次启动失败会直接进入 SAFE MODE 把现场留在屏幕上（拍张照即可定位）。勾选网页刷机页的
+> 「擦除整个 Flash」。仍不行请看 [`BOOT-TROUBLESHOOTING.md`](firmware/v1.3/BOOT-TROUBLESHOOTING.md)，
 > 或双击 `run-boot-diag.cmd` 抓一份日志。
 
 ---
@@ -34,6 +35,8 @@
 - [刷机](#刷机)
 - [首次使用流程](#首次使用流程)
 - [校验值](#校验值)
+- [1.3 版本说明](#13-版本说明)
+- [1.2.1 版本说明](#121-版本说明)
 - [1.2 版本说明](#12-版本说明)
 - [1.1 版本说明](#11-版本说明)
 - [1.0 版本说明](#10-版本说明)
@@ -226,22 +229,22 @@
 
 - 一根能传数据的 USB 线（有些线只供电）；
 - Windows / macOS / Linux 电脑；
-- 本仓库 `firmware/v1.2/` 下的文件。
+- 本仓库 `firmware/v1.3/` 下的文件（要回退可改用 `firmware/v1.2.1/` 或 `firmware/v1.2/`）。
 
 **进刷机模式**：USB 连接电脑 → 电源开关拨到关 → **按住 BOOT 键** → 开机 → 等 2 秒松开 BOOT。
 
 ### 方式一：网页刷机（推荐，免装工具）
 
-1. 用 **Chrome / Edge**（需支持 WebSerial）打开 `firmware/v1.2/alphapi-one-s-web-flasher.html`；
+1. 用 **Chrome / Edge**（需支持 WebSerial）打开 `firmware/v1.3/alphapi-one-s-web-flasher.html`；
 2. 点「连接」选串口；
 3. 按提示刷写。全程约 1–2 分钟，页面会显示每一段进度。
 
-也可以双击 `firmware/v1.2/start-web-flasher.cmd` 起本地服务再打开页面。
+也可以双击 `firmware/v1.3/start-web-flasher.cmd` 起本地服务再打开页面。
 
 ### 方式二：命令行脚本
 
 ```bat
-:: 在 firmware\v1.2\ 目录下双击，或命令行运行
+:: 在 firmware\v1.3\ 目录下双击，或命令行运行
 flash.cmd
 :: 按提示输入串口号（例如 COM17）
 ```
@@ -251,20 +254,20 @@ flash.cmd
 ### 方式三：完整固件一次性刷（最简单）
 
 ```bash
-esptool.py --chip esp32s2 --port COM17 write_flash 0x0 AlphaPi-OneS-4in1-v1.2-full-8MB.bin
+esptool.py --chip esp32s2 --port COM17 write_flash 0x0 AlphaPi-OneS-4in1-v1.3-full-8MB.bin
 ```
 
-`AlphaPi-OneS-4in1-v1.2-full-8MB.bin` 已经把五段按地址拼好，适合救砖/整片重刷。
+`AlphaPi-OneS-4in1-v1.3-full-8MB.bin` 已经把五段按地址拼好，适合救砖/整片重刷。
 
 ### 五段地址对照（精细刷写 / 只刷某一段时用）
 
 | 地址 | 文件 | 大小 (B) | 说明 |
 |---|---|---|---|
-| `0x1000` | `bootloader.bin` | 16,080 | 二级引导 |
+| `0x1000` | `bootloader.bin` | 24,096 | 二级引导（v43+ 含 80MHz 时钟配置，必须从 v1.2.1 起配套使用） |
 | `0x8000` | `partition-table.bin` | 3,072 | 分区表 |
 | `0xD000` | `ota_data_initial.bin` | 8,192 | OTA 标记（清空选择） |
-| `0x20000` | `AlphaPi-OneS-Desktop-Dark.bin` | 2,700,064 | 应用固件（app 分区 5 MB） |
-| `0x500000` | `assets.bin` | 1,865,367 | 资源包：中文普惠体字库 + 21 个表情（2 MB 分区） |
+| `0x20000` | `AlphaPi-OneS-Desktop-Dark.bin` | 2,717,200 | 应用固件（app 分区 5 MB） |
+| `0x500000` | `assets.bin` | 1,901,605 | 资源包：中文普惠体字库 + 音效 + 表情（2 MB 分区） |
 
 完整命令：
 
@@ -300,13 +303,39 @@ esptool.py --chip esp32s2 --port COM17 --baud 921600 write_flash \
 
 ## 校验值
 
+三个版本都在 `firmware/` 下，五段各自 md5 见对应目录的 `md5sums.txt`。
+
+### 推荐：v1.3「开机自愈与屏幕诊断」（内部 v53）
+
+**应用固件** `firmware/v1.3/AlphaPi-OneS-Desktop-Dark.bin`
+`2,717,200 B` · md5 `5941b4c146454238c8eb87d603c88b1c`
+
+**完整固件** `firmware/v1.3/AlphaPi-OneS-4in1-v1.3-full-8MB.bin`
+`7,144,485 B` · md5 `3c431949b4ab9d92ca6bfaf45517be60`
+
+| 文件 | md5 |
+|---|---|
+| `AlphaPi-OneS-Desktop-Dark.bin` | `5941b4c146454238c8eb87d603c88b1c` |
+| `bootloader.bin` | `760d65facec685876f397990d1529e62` |
+| `partition-table.bin` | `6010f63a2f1b62a0a7229304d80cd03c` |
+| `ota_data_initial.bin` | `84d04c9d6cc8ef35bf825d51a5277699` |
+| `assets.bin` | `2a944aea9985a12d806479e94b094622` |
+
+### 回退版：v1.2.1「收音机诊断与优先级回退」（内部 v52）
+
+**应用固件** `firmware/v1.2.1/AlphaPi-OneS-Desktop-Dark.bin`
+`2,708,720 B` · md5 `4980219016264dc455cf6fc322cfda34`
+
+**完整固件** `firmware/v1.2.1/AlphaPi-OneS-4in1-v1.2.1-full-8MB.bin`
+`7,144,485 B` · md5 `a99d4af202587a3ae402849b11f1bc8e`
+
+### 旧版：v1.2（内部 v39）
+
 **应用固件** `firmware/v1.2/AlphaPi-OneS-Desktop-Dark.bin`
 `2,700,064 B` · md5 `0915a5a3407e328a660c6a73a0af7531`
 
 **完整固件** `firmware/v1.2/AlphaPi-OneS-4in1-v1.2-full-8MB.bin`
 `7,108,247 B` · md5 `4ff967dfc9b1831b0f8d3731d05ca9ef`
-
-五段各自 md5 见 `firmware/v1.2/md5sums.txt`：
 
 | 文件 | md5 |
 |---|---|
@@ -315,6 +344,43 @@ esptool.py --chip esp32s2 --port COM17 --baud 921600 write_flash \
 | `partition-table.bin` | `6010f63a2f1b62a0a7229304d80cd03c` |
 | `ota_data_initial.bin` | `84d04c9d6cc8ef35bf825d51a5277699` |
 | `assets.bin` | `c23298d3f2ec5a67022336ba07be9a80` |
+
+---
+
+## 1.3 版本说明
+
+**1.3 是可观测性 + 失败降级版：让「刷完起不来」这类问题第一次变得看得见。**
+
+这块板的 console 走 UART0，而 UART0 没引到 USB——现场从来没有串口日志，三轮「部分机器无限重启」
+都只能靠推断。1.3 把看不见的失败搬到屏幕上：
+
+| # | 机制 | 说明 |
+|---|---|---|
+| 1 | 开机诊断页 | 每次上电先画一屏硬件事实并停留约 1.2 秒（按任意键跳过）：复位原因、第几次未确认成功的启动、PSRAM 可用性与容量、Flash 容量、assets 分区、内部堆余量。**UI 起不来也照常显示，拍张照即可定位。** |
+| 2 | 启动自愈 | 连续 3 次都没活过 20 秒，下一次直接进 SAFE MODE：不建 LVGL、不起 WiFi、不碰音频与收音机，只把诊断页留在屏幕上。长按任意键 3 秒清零计数并重启；断电重来也会清零。 |
+| 3 | 强制整屏重推 | 开机页画过整屏后调 `InvalidateAll()`，避免第一帧只刷脏区留下残影。 |
+
+> 代价：每次开机多约 1.2 秒。这是为拿到现场信息故意付的。**只刷 app 即可**（assets / 分区表未变）。
+> 但注意 v1.2 → v1.3 跨了 bootloader 变更，从 v1.2 升级请刷完整固件。
+
+---
+
+## 1.2.1 版本说明
+
+**1.2.1 是诊断版：给收音机断流装上可观测计数，并回退一处音频优先级。**
+
+v47 起有用户反馈收音机偶发卡顿 / 断流，但收音机不走 AudioService，`/api/status` 的 `play_*`
+字段根本看不到它——之前只能靠猜。1.2.1 新增 `RadioPlayer::Stats` 计数并经 HTTP 暴露，
+同时把 v47 上调的 `audio_output` 优先级从 6 退回 5。
+
+| # | 改动 | 说明 |
+|---|---|---|
+| 1 | 收音机诊断计数 | `/api/status` 新增 `radio_rebuffers/recv_timeout/write_fail/net_err/dec_err/pcm_now/pcm_min/starve_ms`，配 `run-net-diag.cmd` 一键回传与结论 |
+| 2 | `audio_output` 6 → 5 | v47 调到 6 后收音机卡顿，退回 v46 的值 |
+| 3 | 8bit PCM 四舍五入 + ACK 120ms | 消除 -0.5 LSB 直流偏置；恢复 known-good 命令超时 |
+
+> 这一版**只刷 app 即可**（assets / 分区表未变）。从 v1.2 升级需配套 v1.2.1 的 bootloader（80MHz）。
+> 配套的 `ones_net_diag.ps1` / `run-net-diag.cmd` 已放在 `firmware/v1.2.1/`。
 
 ---
 
@@ -444,9 +510,9 @@ idf.py -B build -D IDF_TARGET=esp32s2 \
 
 - 首次编译需要联网拉依赖（`idf.py` 自动处理），保留 `source/` 包里的 `dependencies.lock` 以固定版本。
 - 板级代码在 `main/boards/alphapi-one-s-desktop/`，`main/CMakeLists.txt` 已固定选这块板，不要用上游多板脚本切换型号。
-- 当前占用：app 2,700,064 B / app 分区 5 MB（约 53%，余量 47%）。
+- 当前占用（v1.3）：app 2,717,200 B / app 分区 5 MB（约 52%，余量 48%）。
 
-源码包：`source/AlphaPi-OneS-4in1-source-v1.2.zip`（不含 `build/`、`managed_components/` 等生成物，约 20 MB）。
+源码包：`source/AlphaPi-OneS-4in1-source-v1.3.zip`（v1.2.1 源码在 `source/AlphaPi-OneS-4in1-source-v1.2.1.zip`）（不含 `build/`、`managed_components/` 等生成物，约 20 MB）。
 
 ---
 
@@ -466,13 +532,13 @@ AlphaPi-OneS-4in1/
 │   ├── screen-radio.png       # 收音机单屏
 │   ├── screen-timer.png       # 倒计时单屏
 │   └── screen-metro.png       # 节拍器单屏（倒计时页内）
-├── firmware/v1.2/
+├── firmware/v1.3/                          # 推荐版（另有 v1.2.1 / v1.2 可回退）
 │   ├── AlphaPi-OneS-Desktop-Dark.bin      # 应用固件（写 0x20000）
 │   ├── bootloader.bin                     # 写 0x1000
 │   ├── partition-table.bin                # 写 0x8000
 │   ├── ota_data_initial.bin               # 写 0xD000
 │   ├── assets.bin                         # 写 0x500000（字库 + 表情）
-│   ├── AlphaPi-OneS-4in1-v1.2-full-8MB.bin # 完整固件（写 0x0）
+│   ├── AlphaPi-OneS-4in1-v1.3-full-8MB.bin # 完整固件（写 0x0）
 │   ├── alphapi-one-s-web-flasher.html     # 网页刷机器
 │   ├── start-web-flasher.cmd              # 起本地服务打开网页刷机
 │   ├── flash.cmd / flash_cli.cmd / flash_cli.py
@@ -482,7 +548,9 @@ AlphaPi-OneS-4in1/
 │   ├── BOOT-TROUBLESHOOTING.md            # 开不了机排查手册
 │   └── md5sums.txt
 └── source/
-    └── AlphaPi-OneS-4in1-source-v1.2.zip  # 完整工程源码
+    ├── AlphaPi-OneS-4in1-source-v1.3.zip    # 完整工程源码（推荐）
+    ├── AlphaPi-OneS-4in1-source-v1.2.1.zip  # v1.2.1 源码
+    └── AlphaPi-OneS-4in1-source-v1.2.zip    # v1.2 源码
 ```
 
 ---

@@ -1,0 +1,9 @@
+# v1.2.1 (内部 v52) 收音机诊断与优先级回退 校验清单
+# 格式: md5  文件名
+
+760d65facec685876f397990d1529e62  bootloader.bin
+6010f63a2f1b62a0a7229304d80cd03c  partition-table.bin
+84d04c9d6cc8ef35bf825d51a5277699  ota_data_initial.bin
+4980219016264dc455cf6fc322cfda34  AlphaPi-OneS-Desktop-Dark.bin
+2a944aea9985a12d806479e94b094622  assets.bin
+a99d4af202587a3ae402849b11f1bc8e  AlphaPi-OneS-4in1-v1.2.1-full-8MB.bin
