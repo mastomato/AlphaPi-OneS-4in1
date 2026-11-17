@@ -1,0 +1,9 @@
+# v2.0.1 校验清单（内部 v57）
+# 格式：md5  *文件名
+
+1996af30b746b41791984796507fd9cc  *AlphaPi-OneS-Desktop-Dark.bin
+760d65facec685876f397990d1529e62  *bootloader.bin
+6010f63a2f1b62a0a7229304d80cd03c  *partition-table.bin
+84d04c9d6cc8ef35bf825d51a5277699  *ota_data_initial.bin
+2a944aea9985a12d806479e94b094622  *assets.bin
+d751844dced5ad1743b5b9303504cc01  *AlphaPi-OneS-4in1-v2.0.1-full-8MB.bin

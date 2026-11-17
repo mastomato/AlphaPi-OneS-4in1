@@ -1,13 +1,13 @@
 # AlphaPi OneS 5合1 —— 小智 · 游戏 · 收音机 · 计时器 · 节拍器
 
-**版本 2.0**（2026-11-17）· 适用于 **AlphaPi One S**（ESP32-S2R2）
+**版本 2.0.1**（2026-11-17）· 适用于 **AlphaPi One S**（ESP32-S2R2）
 
 一台 160×128 的小屏桌面设备，五种玩法一键切换：跟小智说话、玩四款小游戏、听网络电台、做计时（倒计时 / 秒表）、打节拍。外加班表主页和手机网页后台。
 
 ![界面总览](docs/desktop-preview.png)
 
 > 上排：主页 · 小智 · 游戏　下排：收音机 · 计时目录 · 定时器 / 节拍器 / 秒表（主页短按 D 进计时目录）。
-> 八屏全部由 v2.0 固件的 **LVGL 页面代码逐像素重放**生成：字体取自 assets 分区的
+> 八屏全部由 v2.0.1 固件的 **LVGL 页面代码逐像素重放**生成：字体取自 assets 分区的
 > `font_puhui_deepseek_14_1.bin` 与 LVGL 内置 Montserrat，图标取自
 > `desktop_assets.h` 的 32×32 RGB565 位图，坐标、圆角、配色与 `desktop_ui.h`
 > 一一对应。时间、日期、气温为示例数据。
@@ -24,7 +24,7 @@
 > **刷完开不了机、一直重启？** 2.0 这一版去掉了开机自愈（diagnostics 改走 `/api/status`），
 > 所以**起不来就刷回 [v1.3](firmware/v1.3/)**——它有开机诊断页和 SAFE MODE，会把故障现场留在屏幕上（拍张照即可定位）。
 > 两种情况都勾选网页刷机页的「擦除整个 Flash」。仍不行请看
-> [`BOOT-TROUBLESHOOTING.md`](firmware/v2.0/BOOT-TROUBLESHOOTING.md)，或双击 `run-net-diag.cmd` 抓一份日志。
+> [`BOOT-TROUBLESHOOTING.md`](firmware/v2.0.1/BOOT-TROUBLESHOOTING.md)，或双击 `run-net-diag.cmd` 抓一份日志。
 
 ---
 
@@ -278,22 +278,22 @@
 
 - 一根能传数据的 USB 线（有些线只供电）；
 - Windows / macOS / Linux 电脑；
-- 本仓库 `firmware/v2.0/` 下的文件（要回退可改用 `firmware/v1.3/`、`firmware/v1.2.1/` 或 `firmware/v1.2/`）。
+- 本仓库 `firmware/v2.0.1/` 下的文件（要回退可改用 `firmware/v1.3/`、`firmware/v1.2.1/` 或 `firmware/v1.2/`）。
 
 **进刷机模式**：USB 连接电脑 → 电源开关拨到关 → **按住 BOOT 键** → 开机 → 等 2 秒松开 BOOT。
 
 ### 方式一：网页刷机（推荐，免装工具）
 
-1. 用 **Chrome / Edge**（需支持 WebSerial）打开 `firmware/v2.0/alphapi-one-s-web-flasher.html`；
+1. 用 **Chrome / Edge**（需支持 WebSerial）打开 `firmware/v2.0.1/alphapi-one-s-web-flasher.html`；
 2. 点「连接」选串口；
 3. 按提示刷写。全程约 1–2 分钟，页面会显示每一段进度。
 
-也可以双击 `firmware/v2.0/start-web-flasher.cmd` 起本地服务再打开页面。
+也可以双击 `firmware/v2.0.1/start-web-flasher.cmd` 起本地服务再打开页面。
 
 ### 方式二：命令行脚本
 
 ```bat
-:: 在 firmware\v2.0\ 目录下双击，或命令行运行
+:: 在 firmware\v2.0.1\ 目录下双击，或命令行运行
 flash.cmd
 :: 按提示输入串口号（例如 COM17）
 ```
@@ -303,10 +303,10 @@ flash.cmd
 ### 方式三：完整固件一次性刷（最简单）
 
 ```bash
-esptool.py --chip esp32s2 --port COM17 write_flash 0x0 AlphaPi-OneS-4in1-v2.0-full-8MB.bin
+esptool.py --chip esp32s2 --port COM17 write_flash 0x0 AlphaPi-OneS-4in1-v2.0.1-full-8MB.bin
 ```
 
-`AlphaPi-OneS-4in1-v2.0-full-8MB.bin` 已经把五段按地址拼好，适合救砖/整片重刷。
+`AlphaPi-OneS-4in1-v2.0.1-full-8MB.bin` 已经把五段按地址拼好，适合救砖/整片重刷。
 
 ### 五段地址对照（精细刷写 / 只刷某一段时用）
 
@@ -354,7 +354,27 @@ esptool.py --chip esp32s2 --port COM17 --baud 921600 write_flash \
 
 三个版本都在 `firmware/` 下，五段各自 md5 见对应目录的 `md5sums.txt`。
 
-### 推荐：v2.0「板级重构 + 三项交互改进」（内部 v56）
+### 推荐：v2.0.1「主页图标修正」（内部 v57）
+
+**应用固件** `firmware/v2.0.1/AlphaPi-OneS-Desktop-Dark.bin`
+`2,740,128 B` · md5 `1996af30b746b41791984796507fd9cc`
+
+**完整固件** `firmware/v2.0.1/AlphaPi-OneS-4in1-v2.0.1-full-8MB.bin`
+`7,144,485 B` · md5 `d751844dced5ad1743b5b9303504cc01`
+
+| 文件 | md5 |
+|---|---|
+| `AlphaPi-OneS-Desktop-Dark.bin` | `1996af30b746b41791984796507fd9cc` |
+| `bootloader.bin` | `760d65facec685876f397990d1529e62` |
+| `partition-table.bin` | `6010f63a2f1b62a0a7229304d80cd03c` |
+| `ota_data_initial.bin` | `84d04c9d6cc8ef35bf825d51a5277699` |
+| `assets.bin` | `2a944aea9985a12d806479e94b094622` |
+
+> v2.0.1 只改了主页四枚图标的位图，功能与 2.0 是同一份代码。
+> bootloader / 分区表 / otadata / assets 与 2.0、1.3、1.2.1 **逐字节相同**，
+> 所以从这三版升级**只刷 app（0x20000）即可**。
+
+### 上一版：v2.0「板级重构 + 三项交互改进」（内部 v56）
 
 **应用固件** `firmware/v2.0/AlphaPi-OneS-Desktop-Dark.bin`
 `2,740,128 B` · md5 `31fceffbea007953650c4d3c8f9c1ee4`
@@ -362,16 +382,8 @@ esptool.py --chip esp32s2 --port COM17 --baud 921600 write_flash \
 **完整固件** `firmware/v2.0/AlphaPi-OneS-4in1-v2.0-full-8MB.bin`
 `7,144,485 B` · md5 `328082d38eb55c03a70a0e27c057cf50`
 
-| 文件 | md5 |
-|---|---|
-| `AlphaPi-OneS-Desktop-Dark.bin` | `31fceffbea007953650c4d3c8f9c1ee4` |
-| `bootloader.bin` | `760d65facec685876f397990d1529e62` |
-| `partition-table.bin` | `6010f63a2f1b62a0a7229304d80cd03c` |
-| `ota_data_initial.bin` | `84d04c9d6cc8ef35bf825d51a5277699` |
-| `assets.bin` | `2a944aea9985a12d806479e94b094622` |
-
-> 2.0 的 bootloader / 分区表 / otadata / assets 与 1.2.1、1.3 **逐字节相同**，
-> 所以从这两版升级**只刷 app（0x20000）即可**。
+> 2.0 的主页图标是青色描边线稿，实机观感不如原来的手绘版本，已被 2.0.1 取代。
+> 除非你要保留那一版做对照，否则直接用 2.0.1。
 
 ### 回退版：v1.3「开机自愈与屏幕诊断」（内部 v53）
 
@@ -463,16 +475,26 @@ esptool.py --chip esp32s2 --port COM17 --baud 921600 write_flash \
 
 ### 四、主页图标与版式
 
-四个图标原来是两套视觉语言混排——游戏是「奶黄实心填充 + 两个纯红按钮」，收音机和计时器是
-「青色细线描边」。这一版统一成一支笔：
+四个图标原来分两套视觉语言：小智和游戏是「奶黄实心填充」，收音机和计时器是「青色细线描边」；
+游戏那枚还带两个纯红按钮，是全组唯一的高饱和色。
 
-- 全部 **2px 青色描边**，**纯红已去掉**，每枚最多一处小面积暖黄点缀
-- **图标改回原生 32px 绘制**。原来最近邻放大到 36px，36/32 = 1.125 不是整数倍，
+版式上的改动是确定的，一直保留：
+
+- **改回原生 32px 绘制**。原来最近邻放大到 36px，36/32 = 1.125 不是整数倍，
   每条边被复制的次数都不同，曲线全带一圈毛边
 - 四列重新均分：`4 + 32 + 8 + 32 + 8 + 32 + 8 + 32 + 4 = 160`
 - 顺带省掉一次启动期的 2 KB PSRAM 分配
 
-图标由源码树里的 `tools/desk_icons.py` 用距离场程序化生成，改图标跑一遍脚本即可。
+**2.0 曾把四枚全部改成 2px 青色描边线稿，这是一次失败的尝试，2.0.1 已回退**：
+
+- 那套线稿是按硬阈值填色的，**没有覆盖率抗锯齿**，整枚只有三种纯色、边缘一个过渡像素都没有，
+  在真机上就是脏边和死直角
+- 原来的手绘图标本身带 2~3 级过渡色（机身描边的 `0x1926`、`0x32AC` 等），这才是它们显得干净的原因
+- 2.0.1 把小智、收音机、计时器**逐字节回退**到 1.2.1 / 1.3 用的手绘数据，只重画了游戏手柄：
+  保留暖黄实体机身与深色挖空细节，去掉旧版的 10 个纯红像素、补齐轮廓断口、边缘改为抗锯齿混合
+
+图标生成器是源码树里的 `tools/desk_icon_game.py`（只负责游戏这一枚）；
+旧的 `tools/desk_icons.py` 已标为废弃，跑它只会打印说明，不会覆盖数据。
 
 ### 五、这一版不含开机自愈
 
@@ -672,23 +694,24 @@ AlphaPi-OneS-4in1/
 │   ├── screen-timer.png       # 定时器子视图
 │   ├── screen-metro.png       # 节拍器子视图
 │   └── screen-stopwatch.png   # 秒表子视图
-├── firmware/v2.0/                          # 推荐版（另有 v1.3 / v1.2.1 / v1.2 可回退）
+├── firmware/v2.0.1/                        # 推荐版（另有 v1.3 / v1.2.1 / v1.2 可回退）
 │   ├── AlphaPi-OneS-Desktop-Dark.bin      # 应用固件（写 0x20000）
 │   ├── bootloader.bin                     # 写 0x1000
 │   ├── partition-table.bin                # 写 0x8000
 │   ├── ota_data_initial.bin               # 写 0xD000
 │   ├── assets.bin                         # 写 0x500000（字库 + 表情）
-│   ├── AlphaPi-OneS-4in1-v2.0-full-8MB.bin # 完整固件（写 0x0）
+│   ├── AlphaPi-OneS-4in1-v2.0.1-full-8MB.bin # 完整固件（写 0x0）
 │   ├── alphapi-one-s-web-flasher.html     # 网页刷机器
 │   ├── start-web-flasher.cmd              # 起本地服务打开网页刷机
 │   ├── flash.cmd / flash_cli.cmd / flash_cli.py
 │   ├── flash_args.txt                     # esptool 参数
-│   ├── run-boot-diag.cmd                  # 双击抓启动日志（零依赖）
-│   ├── ones_boot_diag.ps1                 # 上者调用的脚本
+│   ├── run-net-diag.cmd                   # 双击抓网络/音频诊断（零依赖）
+│   ├── ones_net_diag.ps1                  # 上者调用的脚本
 │   ├── BOOT-TROUBLESHOOTING.md            # 开不了机排查手册
 │   └── md5sums.txt
 └── source/
-    ├── AlphaPi-OneS-4in1-source-v2.0.zip    # 完整工程源码（推荐）
+    ├── AlphaPi-OneS-4in1-source-v2.0.1.zip  # 完整工程源码（推荐）
+    ├── AlphaPi-OneS-4in1-source-v2.0.zip    # v2.0 源码
     ├── AlphaPi-OneS-4in1-source-v1.2.1.zip  # v1.2.1 源码
     └── AlphaPi-OneS-4in1-source-v1.2.zip    # v1.2 源码
 ```
