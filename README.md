@@ -1,8 +1,10 @@
 # AlphaPi OneS 5合1 —— 小智 · 游戏 · 收音机 · 计时器 · 节拍器
 
-**版本 2.0.2**（2026-11-18）· 适用于 **AlphaPi One S**（ESP32-S2R2）
+**版本 2.1.0**（2026-11-19）· 适用于 **AlphaPi One S**（ESP32-S2R2）
 
-标准 ST7735 版加入启动竞态修复。Web 电台列表可输入目标序号，把内置或自定义电台直接移到指定位置。已有 v2.0.1 或标准 ST7735 修复版可只刷应用镜像到 `0x20000`，保留设备设置。固件和源码见 [v2.0.2 发布页](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.0.2)。
+新增**全桌面语音唤醒「你好小智」**：主页/计时器页喊一声即可进入小智对话，小智页待机可直接再次唤醒；收音机、游戏页自动暂停唤醒。同时修复了聆听卡死与切页卡在「正在切换小智」/收音机 STOP 的问题。内置唤醒词模型，不重刷字库即可用。旧版升级只需把应用镜像写到 `0x20000` 保留配置。固件和源码见 [v2.1.0 发布页](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.1.0)。
+
+> 上一版 [v2.0.2](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.0.2) 为标准 ST7735 启动修复与电台排序版，可按需回退。
 
 一台 160×128 的小屏桌面设备，五种玩法一键切换：跟小智说话、玩四款小游戏、听网络电台、做计时（倒计时 / 秒表）、打节拍。外加班表主页和手机网页后台。
 
@@ -280,7 +282,7 @@
 
 - 一根能传数据的 USB 线（有些线只供电）；
 - Windows / macOS / Linux 电脑；
-- 从 [v2.0.2 发布页](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.0.2) 下载固件 ZIP 并解压。可用仓库 `firmware/v2.0.1/` 等目录回退。以下脚本和网页刷机器也包含在 v2.0.2 固件 ZIP 中。
+- 从 [v2.1.0 发布页](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.1.0) 下载固件 ZIP 并解压。可用仓库 `firmware/v2.0.1/` 等目录回退。以下脚本和网页刷机器也包含在 v2.1.0 固件 ZIP 中。
 
 **进刷机模式**：USB 连接电脑 → 电源开关拨到关 → **按住 BOOT 键** → 开机 → 等 2 秒松开 BOOT。
 
@@ -696,7 +698,7 @@ AlphaPi-OneS-4in1/
 │   ├── screen-timer.png       # 定时器子视图
 │   ├── screen-metro.png       # 节拍器子视图
 │   └── screen-stopwatch.png   # 秒表子视图
-├── firmware/v2.0.1/                        # 历史固件（v2.0.2 见 Release）
+├── firmware/v2.0.1/                        # 历史固件（v2.1.0 见 Release）
 │   ├── AlphaPi-OneS-Desktop-Dark.bin      # 应用固件（写 0x20000）
 │   ├── bootloader.bin                     # 写 0x1000
 │   ├── partition-table.bin                # 写 0x8000
