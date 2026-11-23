@@ -1,20 +1,19 @@
 # AlphaPi OneS 5合1 —— 小智 · 游戏 · 收音机 · 计时器 · 节拍器
 
-**版本 2.1.0**（2026-11-19）· 适用于 **AlphaPi One S**（ESP32-S2R2）
+**版本 2.1.1**（2026-11-23）· 适用于 **AlphaPi One S**（ESP32-S2R2）
 
-新增**全桌面语音唤醒「你好小智」**：主页/计时器页喊一声即可进入小智对话，小智页待机可直接再次唤醒；收音机、游戏页自动暂停唤醒。同时修复了聆听卡死与切页卡在「正在切换小智」/收音机 STOP 的问题。内置唤醒词模型，不重刷字库即可用。旧版升级只需把应用镜像写到 `0x20000` 保留配置。固件和源码见 [v2.1.0 发布页](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.1.0)。
+保留全桌面语音唤醒「你好小智」，新增**最近成功连接的 8 组 Wi-Fi 记忆与免输密码切回**，完善收音机退出资源回收、恢复来源页面及语音会话清理。正式界面已去掉测试诊断遮罩，后台 `/api/health` 保留执行阶段记录。基于用户实测目前正常的 R6 整理，历史间歇卡死的根因尚未完全确证，不作长期稳定性保证。固件、完整镜像与对应源码见 [v2.1.1 发布页](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.1.1)。兼容布局升级推荐仅把 app 写到 `0x20000`，保留配置。
 
-> 上一版 [v2.0.2](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.0.2) 为标准 ST7735 启动修复与电台排序版，可按需回退。
+> 上一公开版 [v2.1.0](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.1.0) 保留下载；[v2.0.2](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.0.2) 是标准 ST7735 启动修复与电台排序版。
 
 一台 160×128 的小屏桌面设备，五种玩法一键切换：跟小智说话、玩四款小游戏、听网络电台、做计时（倒计时 / 秒表）、打节拍。外加班表主页和手机网页后台。
 
 ![界面总览](docs/desktop-preview.png)
 
 > 上排：主页 · 小智 · 游戏　下排：收音机 · 计时目录 · 定时器 / 节拍器 / 秒表（主页短按 D 进计时目录）。
-> 八屏全部由 v2.0.1 固件的 **LVGL 页面代码逐像素重放**生成：字体取自 assets 分区的
-> `font_puhui_deepseek_14_1.bin` 与 LVGL 内置 Montserrat，图标取自
-> `desktop_assets.h` 的 32×32 RGB565 位图，坐标、圆角、配色与 `desktop_ui.h`
-> 一一对应。时间、日期、气温为示例数据。
+> 预览由本地界面重放脚本生成，字体取自 assets 的 `font_puhui_deepseek_14_1.bin`
+> 与 LVGL Montserrat，图标取自 `desktop_assets.h`。这是界面示意，时间、日期、
+> 气温和播放状态为示例数据，实际动态状态以设备为准；正式版不显示测试诊断遮罩。
 
 单屏大图：[主页](docs/screen-home.png) ·
 [小智](docs/screen-voice.png) ·
@@ -85,7 +84,9 @@
   新增的台**追加到列表末尾**。改动会先停止播放再重建列表。
 - 内置台已经占掉约 3.3 KB，距 3800 字节上限只剩约 440 字节，所以能新增的台数不多——这是 NVS 单串长度的硬限制。
 - 流量约 64 kbps，一首歌大小/小时，Wi-Fi 稳定即可长时间播放；波形按解码后的 PCM 实时电平驱动，静音或缓冲时为平线。
-- 音量与静音状态断电记忆。
+- 音量与静音状态断电记忆。退出收音机后回到进入前页面并恢复对应状态，重新进入记住上次电台。
+- 退出时协作清理网络、解码和供数任务，再回收内部任务栈及 FIR 工作区；首次初始化先预留任务栈再分配 FIR。
+- Wi-Fi 图标按设备实际联网状态显示，播放或初始化失败显示状态文字。
 
 ### 游戏
 
@@ -144,7 +145,7 @@
 | 开发板 | **AlphaPi One S**（本项目实测板） |
 | 主控 | ESP32-S2R2，实测芯片 revision 1.0 |
 | Flash / PSRAM | 8 MB Flash / 2 MB PSRAM（PSRAM 必需，收音机与界面缓冲都放 PSRAM） |
-| 屏幕 | SPI 屏，物理 128×160，横屏 160×128，RGB565（固件按 ST7789 时序初始化） |
+| 屏幕 | SPI 屏，物理 128×160，横屏 160×128，RGB565（固件使用标准 ST7735 屏驱） |
 | 音频 | N32 UART 协处理器，460800 baud，24 kHz / 8-bit 无符号 / 单声道 |
 | 按键 | 前置 A / B / C / D 四键（高电平有效） |
 | 无线 | 2.4 GHz Wi-Fi；ESP32-S2 无蓝牙 |
@@ -278,67 +279,48 @@
 
 ## 刷机
 
-### 需要准备的
-
-- 一根能传数据的 USB 线（有些线只供电）；
-- Windows / macOS / Linux 电脑；
-- 从 [v2.1.0 发布页](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.1.0) 下载固件 ZIP 并解压。可用仓库 `firmware/v2.0.1/` 等目录回退。以下脚本和网页刷机器也包含在 v2.1.0 固件 ZIP 中。
-
-**进刷机模式**：USB 连接电脑 → 电源开关拨到关 → **按住 BOOT 键** → 开机 → 等 2 秒松开 BOOT。
-
-### 方式一：网页刷机（推荐，免装工具）
-
-1. 用 **Chrome / Edge**（需支持 WebSerial）打开 `firmware/v2.0.1/alphapi-one-s-web-flasher.html`；
-2. 点「连接」选串口；
-3. 按提示刷写。全程约 1–2 分钟，页面会显示每一段进度。
-
-也可以双击 `firmware/v2.0.1/start-web-flasher.cmd` 起本地服务再打开页面。
-
-### 方式二：命令行脚本
-
-```bat
-:: 在 firmware\v2.0.1\ 目录下双击，或命令行运行
-flash.cmd
-:: 按提示输入串口号（例如 COM17）
-```
-
-脚本本质是调用 esptool（`flash_cli.py` 会自动定位/调用），参数已按五段地址写好。
-
-### 方式三：完整固件一次性刷（最简单）
+从 [v2.1.1 发布页](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/tag/v2.1.1) 下载 `AlphaPi-OneS-v2.1.1-Complete-Flash-Package.zip` 并解压。需要数据 USB 线、Python 3.10+ 和 esptool 5.x。旧版固件与网页刷机工具仍在各历史 Release / `firmware/` 目录。
 
 ```bash
-esptool.py --chip esp32s2 --port COM17 write_flash 0x0 AlphaPi-OneS-4in1-v2.0.1-full-8MB.bin
+python -m pip install "esptool>=5,<6"
+python flash_cli.py --check-only
 ```
 
-`AlphaPi-OneS-4in1-v2.0.1-full-8MB.bin` 已经把五段按地址拼好，适合救砖/整片重刷。
+**进刷机模式**：USB 连接电脑 → 关机 → 按住 BOOT → 开机 → 等 2 秒松开 BOOT。端口以设备管理器为准，下面以 COM20 为例。
 
-### 五段地址对照（精细刷写 / 只刷某一段时用）
+### 推荐：只刷 app，保留配置
 
-| 地址 | 文件 | 大小 (B) | 说明 |
-|---|---|---|---|
-| `0x1000` | `bootloader.bin` | 24,096 | 二级引导（v43+ 含 80MHz 时钟配置，必须从 v1.2.1 起配套使用） |
-| `0x8000` | `partition-table.bin` | 3,072 | 分区表 |
-| `0xD000` | `ota_data_initial.bin` | 8,192 | OTA 标记（清空选择） |
-| `0x20000` | `AlphaPi-OneS-Desktop-Dark.bin` | 2,740,128 | 应用固件（app 分区 5 MB，余 46%） |
-| `0x500000` | `assets.bin` | 1,901,605 | 资源包：中文普惠体字库 + 音效 + 表情（2 MB 分区） |
-
-完整命令：
+兼容现有分区布局的设备，单刷 `AlphaPi-OneS-v2.1.1.bin` 到 **`0x20000`**，保留 Wi-Fi、绑定、电台和本地存储。
 
 ```bash
-esptool.py --chip esp32s2 --port COM17 --baud 921600 write_flash \
-  --flash_mode dio --flash_freq 80m --flash_size 8MB \
-  0x1000 bootloader.bin \
-  0x8000 partition-table.bin \
-  0xd000 ota_data_initial.bin \
-  0x20000 AlphaPi-OneS-Desktop-Dark.bin \
-  0x500000 assets.bin
+python flash_cli.py --mode app --port COM20
 ```
 
-**注意**
+Windows 也可运行 `flash_app.cmd --port COM20`。默认使用 460800 波特率、`--no-stub`，写后自动校验。
 
-- **`assets.bin` 首次刷机必须带**，否则没有中文字库与表情，界面会出现空白方块。
-- 不写 `0x9000`（NVS），所以升级固件**一般保留**原有配网与小智绑定；想彻底重来请在配网页长按 B 清 Wi-Fi，或用 `esptool erase_flash` 整片擦除。
-- **刷完别忘关机重启**：松开所有按键，电源开关关 3–5 秒再开。设备有电池，只拔 USB 不一定会重启。
+### 完整刷入：清空配置并重新配网
+
+8MiB 一体镜像 `AlphaPi-OneS-v2.1.1-Full-8MB.bin` 写到 **`0x0`**。bootloader 在镜像内部实际位于 `0x1000`；空隙为 FF。**此方式会清空 Wi-Fi、绑定、电台及本地存储**，之后重新配网，必要时重新绑定。
+
+```bash
+python flash_cli.py --mode full --port COM20
+```
+
+Windows 可用 `flash_full.cmd --port COM20`。
+
+### 五段地址对照
+
+| 地址 | 文件 | 说明 |
+|---|---|---|
+| `0x1000` | `bootloader.bin` | 二级引导 |
+| `0x8000` | `partition-table.bin` | 分区表 |
+| `0xD000` | `ota_data_initial.bin` | OTA 初始选择 |
+| `0x20000` | `AlphaPi-OneS-v2.1.1.bin` | app，2,880,624 字节 |
+| `0x500000` | `assets.bin` | 字库、音效、表情，沿用 v2.1.0 |
+
+`python flash_cli.py --mode parts --port COM20` 可按五段刷入，不主动覆盖 NVS/storage。五段与一体镜像二选一。`--dry-run` 只显示命令、不打开串口。
+
+**校验成功后必须手动 OFF → ON**，只拔 USB 不一定会重启。首次完整安装必须带 assets，否则缺少中文与表情。文件 MD5/SHA256、大小和容量检查见包内 `manifest.json`。
 
 ---
 
@@ -348,9 +330,9 @@ esptool.py --chip esp32s2 --port COM17 --baud 921600 write_flash \
 2. 主页**长按 A** → 配网页 → **短按 A** 打开热点。
 3. 手机连 `AlphaPi-Desk` → 打开 `192.168.4.1` → **Wi-Fi** 标签填家里 2.4 GHz 网络 → 保存并连接。
 4. 连接成功后：**天气** 标签搜索城市并同步；桌面日期、星期、城市与气温开始正常刷新。
-5. 小智：主页短按 **B**，按屏幕验证码在服务端绑定设备；绑定后短按 **A** 说话。
+5. 小智：主页短按 **A**，按屏幕验证码在服务端绑定设备；绑定后自动起听，也可按 A 或说「你好小智」。
 6. 收音机：主页短按 **C**，短按 **A** 播放（想听自己的台：网页「我的电台」加一行 `名称|地址`）。
-7. 游戏 / 计时：主页短按 **A** 进游戏；短按 **D** 进计时目录，选定时器 / 节拍器 / 秒表后按 **A** 进入。
+7. 游戏 / 计时：主页短按 **B** 进游戏；短按 **D** 进计时目录，选定时器 / 节拍器 / 秒表后按 **A** 进入。
 
 ---
 
@@ -658,7 +640,9 @@ v47 起有用户反馈收音机偶发卡顿 / 断流，但收音机不走 AudioS
 - 小智依赖服务端，网络差时可能要多试一次；长对话的稳定性受服务端影响。
 - 160×128 屏幕空间有限，长文本会截断显示（例：收音机页 LIVE 药丸里文字底部约 1px 被父容器裁掉）。
 - 五段刷机漏掉 `assets.bin` 会导致中文显示为方块。
-- 各功能页切换时会等音频链路退出（最长 4 秒），这段时间屏幕提示「正在切换」。
+- 各功能页切换会等待音频链路、旧语音任务和收音机 worker 实际交还资源，这段时间提示「正在切换」；网络收尾可能使等待变长，不再以 4 秒超时跳过所有权检查。
+- Wi-Fi 最多记忆最近成功连接的 8 组网络；网页可免密切回，当前按最后成功网络启动，未实现多个已保存网络的自动择网。
+- `/api/health` 保留 `exit_phase`、`ui_phase` 和标记时间。出现卡住先保留供电并采样；这些记录不在断电后持久保存。
 
 ---
 
@@ -669,14 +653,14 @@ v47 起有用户反馈收音机偶发卡顿 / 断流，但收音机不走 AudioS
 ```bash
 # 在 ESP-IDF 环境终端里，源码根目录执行
 idf.py -B build -D IDF_TARGET=esp32s2 \
-  -D "SDKCONFIG_DEFAULTS=previous.defaults;ones.defaults" build
+  -D ONES_V15_RAW_SPI=OFF -D "SDKCONFIG_DEFAULTS=previous.defaults;ones.defaults" build
 ```
 
 - 首次编译需要联网拉依赖（`idf.py` 自动处理），保留 `source/` 包里的 `dependencies.lock` 以固定版本。
 - 板级代码在 `main/boards/alphapi-one-s-desktop/`，`main/CMakeLists.txt` 已固定选这块板，不要用上游多板脚本切换型号。
-- 当前占用（v2.0）：app 2,740,128 B / app 分区 5 MB（约 54%，余量 46%）。
+- v2.1.1 app 为 2,880,624 B，分区容量由包内 manifest 校验；桌面发行号以 `/api/health` 的 `build=v2.1.1` 为准，镜像头继承上游内部版本 2.5.3。
 
-源码包：`source/AlphaPi-OneS-4in1-source-v2.0.zip`（旧版在 `source/` 下同名替换版本号）（不含 `build/`、`managed_components/` 等生成物，约 7 MB）。
+对应源码：[AlphaPi-OneS-4in1-source-v2.1.1.zip](https://github.com/mastomato/AlphaPi-OneS-4in1/releases/download/v2.1.1/AlphaPi-OneS-4in1-source-v2.1.1.zip)。不含 `build/`、`managed_components/`、日志或本机凭据；首次构建按依赖清单联网恢复组件。旧版源码保留在 `source/` 及各版本 Release。
 
 ---
 
@@ -689,7 +673,7 @@ AlphaPi-OneS-4in1/
 ├── LICENSE                    # MIT（继承上游）
 ├── THIRD_PARTY_NOTICES.md     # 第三方组件声明
 ├── docs/
-│   ├── desktop-preview.png    # 六屏总览（由固件绘制代码逐像素重放）
+│   ├── desktop-preview.png    # 八屏界面示意
 │   ├── screen-home.png        # 主页单屏
 │   ├── screen-voice.png       # 小智单屏
 │   ├── screen-game.png        # 游戏列表单屏
@@ -698,7 +682,7 @@ AlphaPi-OneS-4in1/
 │   ├── screen-timer.png       # 定时器子视图
 │   ├── screen-metro.png       # 节拍器子视图
 │   └── screen-stopwatch.png   # 秒表子视图
-├── firmware/v2.0.1/                        # 历史固件（v2.1.0 见 Release）
+├── firmware/v2.0.1/                        # 历史固件（最新 v2.1.1 见 Release）
 │   ├── AlphaPi-OneS-Desktop-Dark.bin      # 应用固件（写 0x20000）
 │   ├── bootloader.bin                     # 写 0x1000
 │   ├── partition-table.bin                # 写 0x8000
